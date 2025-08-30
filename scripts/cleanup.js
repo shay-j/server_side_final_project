@@ -124,6 +124,9 @@ Apply with custom identity (if needed):
     node scripts/cleanup.js --id=123123 --first=mosh --last=israeli --birthday=1990-01-01 --yes
 */
 
+//npm run cleanup:dry
+//npm run cleanup
+
 /*
 How it works:
 Loads the MONGODB_URI from .env.

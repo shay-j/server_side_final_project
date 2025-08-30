@@ -6,3 +6,14 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+
+
+# Environment files (never commit secrets)
+.env
+.env.*
+
+# (optional) JetBrains HTTP Client responses live here
+.idea/httpRequests/
+
+# (recommended) node_modules (don’t ship this in git)
+node_modules/

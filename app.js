@@ -13,7 +13,7 @@ const { requestLogger } = require('./src/middleware/requestLogger');
 const { errorHandler } = require('./src/middleware/errorHandler');
 const routes = require('./src/routes');
 
-//connect to mongo
+// connect to mongo
 const { connect } = require('./src/db');
 if (process.env.NODE_ENV !== 'test') {
   connect(process.env.MONGODB_URI).catch((err) => {

@@ -1,0 +1,77 @@
+### Health check
+GET http://localhost:3000/health
+
+### About (team info)
+GET http://localhost:3000/api/about
+
+### Add user
+POST http://localhost:3000/api/add
+Content-Type: application/json
+
+{
+  "id": 123123,
+  "first_name": "mosh",
+  "last_name": "israeli",
+  "birthday": "1990-01-01"
+}
+
+### List all users
+GET http://localhost:3000/api/users
+
+### Get user details by ID
+GET http://localhost:3000/api/users/123123
+
+### Add cost (no date → server will insert current time)
+POST http://localhost:3000/api/add
+Content-Type: application/json
+
+{
+  "userid": 123123,
+  "description": "milk",
+  "category": "food",
+  "sum": 10
+}
+
+### Add cost (explicit future date, valid)
+POST http://localhost:3000/api/add
+Content-Type: application/json
+
+{
+  "userid": 123123,
+  "description": "book",
+  "category": "education",
+  "sum": 50,
+  "date": "2025-09-10T00:00:00Z"
+}
+
+### Add cost (invalid past date → should fail with 400)
+POST http://localhost:3000/api/add
+Content-Type: application/json
+
+{
+  "userid": 123123,
+  "description": "old ticket",
+  "category": "sports",
+  "sum": 20,
+  "date": "2023-01-01T00:00:00Z"
+}
+
+### Add cost (invalid input (whitelist check) → should fail with 400)
+POST http://localhost:3000/api/add
+Content-Type: application/json
+
+{
+"userid": 123123,
+"description": "plane ticket",
+"category": "travel",
+"sum": 200
+}
+
+### Monthly report (for current month August 2025)
+GET http://localhost:3000/api/report?id=123123&year=2025&month=8
+
+### Monthly report (for current month August 2025)
+GET http://localhost:3000/api/report?id=123123&year=2025&month=9
+
+### Logs
+GET http://localhost:3000/api/logs

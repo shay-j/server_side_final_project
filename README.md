@@ -34,7 +34,7 @@ Implements users, costs, monthly reports, request logging, and validation.
 
 ## Project Structure
 
-You’re using the Express generator layout with added `src/` modules:
+We're using the Express generator layout with added `src/` modules:
 
 ```
 bin/www               # server bootstrap (listens after Mongo connects)
@@ -279,3 +279,6 @@ node scripts/cleanup.js --id=123123 --first=mosh --last=israeli --birthday=1990-
   `...@cluster.mongodb.net/costmanager_test` ✅  
   `...@cluster.mongodb.net_test` ❌
 - **Validation errors:** Check bodies match schemas, category whitelist, date not in past.
+
+
+rendered URL: https://server-side-final-project-ovhm.onrender.com/

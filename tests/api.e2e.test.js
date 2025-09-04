@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const request = require('supertest');
 
 const { connect } = require('../src/db');
-const app = require('../app');
+const app = require('../src/app');
 
 // Handy helpers
 function nowY() { return new Date().getUTCFullYear(); }

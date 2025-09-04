@@ -2,7 +2,7 @@
 
 const Cost = require('../models/Cost');
 const { CATEGORIES } = require('./constants');
-const { startOfMonth, endOfMonth } = require('./dateUtils');
+const { startOfMonth, endOfMonth } = require('./dates');
 
 async function buildMonthlyReport(userid, year, month) {
     const from = startOfMonth(year, month);

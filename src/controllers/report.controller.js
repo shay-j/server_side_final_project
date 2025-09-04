@@ -3,7 +3,7 @@
 const Joi = require('joi');
 const { validate } = require('../middleware/validate');
 const { buildMonthlyReport } = require('../utils/buildReport');
-const { isPastMonthYear } = require('../utils/dateUtils');
+const { isPastMonthYear } = require('../utils/dates');
 const Report = require('../models/Report');
 
 const reportQuerySchema = Joi.object({

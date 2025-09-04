@@ -3,11 +3,11 @@
 const express = require('express');
 const router = express.Router();
 
-const { addCost, addCostValidator } = require('../controllers/costController');
-const { addUser, addUserValidator, getUserById, listUsers } = require('../controllers/userController');
-const { getMonthlyReport, reportQueryValidator } = require('../controllers/reportController');
-const { about } = require('../controllers/aboutController');
-const { listLogs } = require('../controllers/logController');
+const { addCost, addCostValidator } = require('../controllers/cost.controller');
+const { addUser, addUserValidator, getUserById, listUsers } = require('../controllers/user.controller');
+const { getMonthlyReport, reportQueryValidator } = require('../controllers/report.controller');
+const { about } = require('../controllers/about.controller');
+const { listLogs } = require('../controllers/log.controller');
 
 /**
  * The doc uses /api/add for both adding a user and adding a cost.

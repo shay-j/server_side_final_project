@@ -2,7 +2,7 @@
 
 'use strict';
 
-const app = require('../app');
+const app = require('../src/app');
 const debug = require('debug')('server-side-final-project:server');
 const http = require('http');
 

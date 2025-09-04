@@ -2,7 +2,7 @@
 
 const Joi = require('joi');
 const Cost = require('../models/Cost');
-const { isPastDate } = require('../utils/dateUtils');
+const { isPastDate } = require('../utils/dates');
 const { validate } = require('../middleware/validate');
 
 const addCostSchema = Joi.object({

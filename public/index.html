@@ -96,7 +96,7 @@
     <div class="sp"></div>
     <div class="base-url">
       <span class="badge">Base URL</span>
-      <input id="baseUrl" placeholder="https://your-deploy.example.com" />
+      <input id="baseUrl" />
       <button class="btn outline" id="saveBase">Save</button>
     </div>
   </div>
@@ -258,6 +258,9 @@
   const statusBadge = $('#statusBadge');
   const toast = $('#toast');
   let autoscroll = true;
+  const baseInput = document.querySelector('#baseUrl');
+  const saveBase = document.querySelector('#saveBase');
+  const DEFAULT_BASE = location.origin.replace(/\/$/, '');
 
   const tabs = document.querySelectorAll('.tab');
   tabs.forEach(t => t.addEventListener('click', () => {
@@ -278,8 +281,7 @@
     const f = $('#logFilter').value.trim();
     const entry = `[${t}] ${line}`;
     if(!f || entry.toLowerCase().includes(f.toLowerCase())){
-      logsEl.textContent += entry + '
-      ';
+      logsEl.textContent += entry + '';
       if(autoscroll){ logsEl.scrollTop = logsEl.scrollHeight; }
     }
   }
@@ -291,11 +293,25 @@
   $('#logFilter').addEventListener('input', ()=>{ /* re-rendering not needed: filter applies to new lines */ });
 
   // ========= base URL =========
-  const baseInput = $('#baseUrl');
-  const saveBase = $('#saveBase');
-  baseInput.value = localStorage.getItem('cm_base') || location.origin;
-  saveBase.addEventListener('click', ()=>{ localStorage.setItem('cm_base', baseInput.value.trim()); showToast('Saved'); });
-  const API = () => (baseInput.value.trim().replace(/\/$/, ''));
+
+  // load saved or fallback to the current origin, then persist
+  (function initBase(){
+    const saved = (localStorage.getItem('cm_base') || '').trim();
+    const looksPlaceholder = /your-deploy\.example\.com/i.test(saved) || saved === '';
+    const base = looksPlaceholder ? DEFAULT_BASE : saved;
+    baseInput.value = base;
+    if (looksPlaceholder) localStorage.setItem('cm_base', base);
+  })();
+
+  saveBase.addEventListener('click', ()=>{
+    const v = baseInput.value.trim().replace(/\/$/, '');
+    localStorage.setItem('cm_base', v);
+  });
+
+  const API = () => {
+    const v = baseInput.value.trim();
+    return v ? v.replace(/\/$/, '') : DEFAULT_BASE;
+  };
 
   // ========= HTTP =========
   async function send(method, path, body){

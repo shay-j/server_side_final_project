@@ -29,9 +29,9 @@
       background:linear-gradient(135deg,var(--pri),var(--vio)); box-shadow:0 8px 28px rgba(94,234,212,.35)}
     .brand{font-weight:700;letter-spacing:.3px;display:flex;align-items:center;gap:10px}
     .sp{flex:1}
-    .base-url{display:flex;gap:10px;align-items:center}
-    .base-url input{width:360px}
     .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid var(--border);background:rgba(255,255,255,.05)}
+    .chip{background:var(--chip); border:1px solid var(--border); padding:6px 10px; border-radius:999px; font-size:12px}
+    .mono{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 
     .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
     .col-4{grid-column:span 4}
@@ -78,14 +78,19 @@
     .tab.active{border-color:var(--pri); box-shadow:0 0 0 3px rgba(94,234,212,.15)}
 
     .toolbar{display:flex;gap:8px;flex-wrap:wrap}
-
     .chips{display:flex;gap:6px;flex-wrap:wrap}
-    .chip{background:var(--chip); border:1px solid var(--border); padding:6px 10px; border-radius:999px; font-size:12px}
-    .chip input{width:auto}
 
     .toast{position:fixed; right:18px; bottom:18px; background:rgba(16,24,48,.95); border:1px solid var(--border);
       color:var(--text); padding:10px 12px; border-radius:10px; box-shadow:0 12px 30px rgba(0,0,0,.35); opacity:0; transform: translateY(10px); transition:.2s}
     .toast.show{opacity:1; transform:none}
+
+    /* status LED */
+    .led{display:inline-flex;align-items:center;gap:8px}
+    .dot{width:10px;height:10px;border-radius:50%;}
+    .dot.idle{background:#6b7280}
+    .dot.work{background:var(--warn)}
+    .dot.ok{background:var(--ok)}
+    .dot.err{background:var(--err)}
   </style>
 </head>
 <body>
@@ -94,11 +99,12 @@
     <div class="logo" aria-hidden="true"></div>
     <div class="brand">Cost Manager • Admin</div>
     <div class="sp"></div>
-    <div class="base-url">
-      <span class="badge">Base URL</span>
-      <input id="baseUrl" />
-      <button class="btn outline" id="saveBase">Save</button>
-    </div>
+
+    <!-- Base URL (auto-detect + auto-save, no manual Save) -->
+    <div class="mono chip" id="hostPortChip" title="Resolved host:port">—</div>
+    <span class="badge">Base URL</span>
+    <input id="baseUrl" class="mono" style="width:360px" placeholder="http://localhost:5173" />
+    <span class="badge led"><span id="led" class="dot idle"></span><span id="statusBadge">idle</span></span>
   </div>
 </header>
 
@@ -228,7 +234,7 @@
       </div>
     </div>
     <div class="card">
-      <h3 style="display:flex;align-items:center;gap:8px">Client Logs <span class="badge" id="statusBadge">idle</span></h3>
+      <h3 style="display:flex;align-items:center;gap:8px">Client Logs</h3>
       <div class="row">
         <div>
           <label>Filter (includes)</label>
@@ -250,18 +256,24 @@
 <div id="toast" class="toast">Copied</div>
 
 <script>
-  // ========= helpers =========
-  const $ = sel => document.querySelector(sel);
+  // ========= DOM refs =========
+  const $ = s => document.querySelector(s);
   const reqPre = $('#req');
   const resPre = $('#res');
   const logsEl = $('#logs');
-  const statusBadge = $('#statusBadge');
   const toast = $('#toast');
-  let autoscroll = true;
-  const baseInput = document.querySelector('#baseUrl');
-  const saveBase = document.querySelector('#saveBase');
-  const DEFAULT_BASE = location.origin.replace(/\/$/, '');
+  const baseInput = $('#baseUrl');
+  const statusBadge = $('#statusBadge');
+  const led = $('#led');
+  const hostPortChip = $('#hostPortChip');
 
+  // ========= state =========
+  const DEFAULT_BASE = location.origin.replace(/\/$/, ''); // auto-detect host + port
+  let autoscroll = true;
+  let logs = []; // [{ts, line}]
+  let busyCount = 0;
+
+  // ========= UI helpers =========
   const tabs = document.querySelectorAll('.tab');
   tabs.forEach(t => t.addEventListener('click', () => {
     tabs.forEach(x => x.classList.remove('active'));
@@ -274,60 +286,96 @@
   function showToast(msg){ toast.textContent = msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1100); }
   function setReq(obj){ reqPre.classList.remove('error'); reqPre.textContent = typeof obj==='string' ? obj : JSON.stringify(obj, null, 2); }
   function setRes(obj, isError){ resPre.classList.toggle('error', !!isError); resPre.textContent = typeof obj==='string' ? obj : JSON.stringify(obj, null, 2); }
-  function setBusy(b){ statusBadge.textContent = b? 'working…' : 'idle'; statusBadge.style.borderColor = b? 'var(--warn)':'var(--border)'; }
 
-  function log(line){
-    const t = new Date().toISOString();
-    const f = $('#logFilter').value.trim();
-    const entry = `[${t}] ${line}`;
-    if(!f || entry.toLowerCase().includes(f.toLowerCase())){
-      logsEl.textContent += entry + '';
-      if(autoscroll){ logsEl.scrollTop = logsEl.scrollHeight; }
-    }
+  function setBusy(b){
+    if (b) busyCount++; else busyCount = Math.max(0, busyCount-1);
+    const working = busyCount > 0;
+    statusBadge.textContent = working ? 'working…' : 'idle';
+    led.className = 'dot ' + (working ? 'work' : 'idle');
   }
+  function setOK(){ statusBadge.textContent = 'online'; led.className = 'dot ok'; }
+  function setERR(){ statusBadge.textContent = 'error'; led.className = 'dot err'; }
 
-  $('#toggleAutoscroll').addEventListener('click', () => {
-    autoscroll = !autoscroll; $('#toggleAutoscroll').textContent = `Autoscroll: ${autoscroll? 'on':'off'}`;
-  });
-  $('#clearLogs').addEventListener('click', ()=>{ logsEl.textContent=''; });
-  $('#logFilter').addEventListener('input', ()=>{ /* re-rendering not needed: filter applies to new lines */ });
-
-  // ========= base URL =========
-
-  // load saved or fallback to the current origin, then persist
-  (function initBase(){
-    const saved = (localStorage.getItem('cm_base') || '').trim();
-    const looksPlaceholder = /your-deploy\.example\.com/i.test(saved) || saved === '';
-    const base = looksPlaceholder ? DEFAULT_BASE : saved;
-    baseInput.value = base;
-    if (looksPlaceholder) localStorage.setItem('cm_base', base);
-  })();
-
-  saveBase.addEventListener('click', ()=>{
-    const v = baseInput.value.trim().replace(/\/$/, '');
-    localStorage.setItem('cm_base', v);
-  });
-
-  const API = () => {
+  // ========= Base URL =========
+  function getBase(){
     const v = baseInput.value.trim();
     return v ? v.replace(/\/$/, '') : DEFAULT_BASE;
-  };
+  }
+  function parseHostPort(u){
+    try{
+      const url = new URL(u);
+      const port = url.port || (url.protocol === 'https:' ? '443' : '80');
+      return `${url.hostname}:${port}`;
+    }catch{ return '—'; }
+  }
+  function saveBase(v){
+    localStorage.setItem('cm_base', v);
+    hostPortChip.textContent = parseHostPort(v);
+  }
+  (function initBase(){
+    const saved = (localStorage.getItem('cm_base') || '').trim();
+    const use = saved ? saved : DEFAULT_BASE; // auto-detect if nothing saved
+    baseInput.value = use;
+    saveBase(use);
+  })();
+  // auto-save on change with debounce
+  let baseTimer = null;
+  baseInput.addEventListener('input', ()=>{
+    clearTimeout(baseTimer);
+    baseTimer = setTimeout(()=>{
+      const v = baseInput.value.trim().replace(/\/$/, '') || DEFAULT_BASE;
+      // validate URL
+      try{ new URL(v); saveBase(v); }catch{ /* keep previous */ }
+    }, 250);
+  });
+
+  // ========= Logs with working filter =========
+  function renderLogs(){
+    const f = $('#logFilter').value.trim().toLowerCase();
+    const view = f ? logs.filter(x => x.line.toLowerCase().includes(f)) : logs;
+    logsEl.textContent = view.map(x => x.line).join('\n');
+    if (autoscroll) logsEl.scrollTop = logsEl.scrollHeight;
+  }
+  function log(line){
+    const t = new Date().toISOString();
+    const entry = `[${t}] ${line}`;
+    logs.push({ ts: Date.now(), line: entry });
+    renderLogs();
+  }
+  $('#toggleAutoscroll').addEventListener('click', () => {
+    autoscroll = !autoscroll;
+    $('#toggleAutoscroll').textContent = `Autoscroll: ${autoscroll? 'on':'off'}`;
+  });
+  $('#clearLogs').addEventListener('click', ()=>{ logs = []; renderLogs(); });
+  $('#logFilter').addEventListener('input', renderLogs);
 
   // ========= HTTP =========
   async function send(method, path, body){
-    const url = API()+path;
-    setBusy(true); setReq(body? {method, url, body} : `${method} ${url}`);
+    const url = getBase() + path;
+    setBusy(true);
+    setReq(body? {method, url, body} : `${method} ${url}`);
     log(`${method} ${url}`);
     try{
-      const r = await fetch(url, { method, headers: body? {'Content-Type':'application/json'} : undefined, body: body? JSON.stringify(body) : undefined });
+      const r = await fetch(url, {
+        method,
+        headers: body? {'Content-Type':'application/json'} : undefined,
+        body: body? JSON.stringify(body) : undefined
+      });
       const text = await r.text();
       let data; try{ data = JSON.parse(text) } catch{ data = text }
-      const isErr = r.status>=400;
+      const isErr = r.status >= 400;
       setRes({ status:r.status, data }, isErr);
       log(`→ ${r.status}`);
+      if (!isErr) setOK(); else setERR();
       return { status:r.status, data };
-    }catch(err){ setRes({ error:String(err) }, true); log(`ERROR ${err}`); throw err; }
-    finally{ setBusy(false); }
+    }catch(err){
+      setRes({ error:String(err) }, true);
+      log(`ERROR ${err}`);
+      setERR();
+      throw err;
+    }finally{
+      setBusy(false);
+    }
   }
 
   // ========= Users =========
@@ -350,13 +398,18 @@
 
   // ========= Report =========
   $('#btnReport').addEventListener('click', async ()=>{
-    const uid = Number($('#r_uid').value); const ym = $('#r_month').value; if(!ym){ showToast('Pick month'); return; }
+    const uid = Number($('#r_uid').value);
+    const ym = $('#r_month').value; if(!ym){ showToast('Pick month'); return; }
     const [y,m] = ym.split('-'); const q = `?id=${encodeURIComponent(uid)}&year=${encodeURIComponent(y)}&month=${encodeURIComponent(Number(m))}`;
-    await send('GET', `/api/report${q}`); tabs.forEach(x=>x.classList.remove('active')); tabs[1].classList.add('active'); reqPre.style.display='none'; resPre.style.display='block';
+    await send('GET', `/api/report${q}`);
+    tabs.forEach(x=>x.classList.remove('active')); tabs[1].classList.add('active'); reqPre.style.display='none'; resPre.style.display='block';
   });
 
   // ========= Quick actions =========
-  $('#btnGetUser').addEventListener('click', async ()=>{ const uid = Number($('#lu_uid').value); await send('GET', `/api/users/${encodeURIComponent(uid)}`); });
+  $('#btnGetUser').addEventListener('click', async ()=>{
+    const uid = Number($('#lu_uid').value);
+    await send('GET', `/api/users/${encodeURIComponent(uid)}`);
+  });
   $('#btnListUsers').addEventListener('click', async ()=>{ await send('GET', '/api/users'); });
   $('#btnLogs').addEventListener('click', async ()=>{ await send('GET', '/api/logs'); });
   $('#btnAbout').addEventListener('click', async ()=>{ await send('GET', '/api/about'); });
@@ -364,8 +417,12 @@
 
   // ========= Pane tools =========
   $('#clearPane').addEventListener('click', ()=>{ reqPre.textContent='—'; resPre.textContent='—'; resPre.classList.remove('error'); });
-  $('#btnCopyReq').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(reqPre.textContent); showToast('Request copied'); }catch{ showToast('Copy failed'); } });
-  $('#btnCopyRes').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(resPre.textContent); showToast('Response copied'); }catch{ showToast('Copy failed'); } });
+  $('#btnCopyReq').addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText(reqPre.textContent); showToast('Request copied'); }catch{ showToast('Copy failed'); }
+  });
+  $('#btnCopyRes').addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText(resPre.textContent); showToast('Response copied'); }catch{ showToast('Copy failed'); }
+  });
   $('#btnExportJson').addEventListener('click', ()=>{
     try{
       const active = resPre.textContent.trim(); if(!active || active==='—') { showToast('No response'); return; }
@@ -376,7 +433,10 @@
 
   // ========= init =========
   (function init(){
-    log('Dashboard ready. Set Base URL to your API and start.'); setBusy(false);
+    log('Dashboard ready. Base URL auto-detected from current origin. You can override it above.');
+    // initial LED state
+    led.className = 'dot idle';
+    hostPortChip.title = 'Resolved host:port';
   })();
 </script>
 </body>

@@ -16,10 +16,10 @@
     html,body{height:100%}
     body{margin:0; color:var(--text); font:15px/1.5 ui-sans-serif,system-ui,Segoe UI,Roboto,Ubuntu,Arial;
       background:
-              radial-gradient(1200px 600px at 10% -10%, #172145 0%, transparent 60%),
-              radial-gradient(900px 500px at 90% 10%, #0e1d3f 0%, transparent 55%),
-              radial-gradient(900px 600px at 60% 100%, #0d2337 0%, transparent 60%),
-              var(--bg);
+        radial-gradient(1200px 600px at 10% -10%, #172145 0%, transparent 60%),
+        radial-gradient(900px 500px at 90% 10%, #0e1d3f 0%, transparent 55%),
+        radial-gradient(900px 600px at 60% 100%, #0d2337 0%, transparent 60%),
+        var(--bg);
     }
     header{position:sticky;top:0;z-index:20;backdrop-filter:saturate(120%) blur(10px);
       background:linear-gradient(180deg, rgba(10,15,30,.9), rgba(10,15,30,.35)); border-bottom:1px solid var(--border)}
@@ -89,279 +89,279 @@
   </style>
 </head>
 <body>
-<header>
-  <div class="bar">
-    <div class="logo" aria-hidden="true"></div>
-    <div class="brand">Cost Manager • Admin</div>
-    <div class="sp"></div>
-    <div class="base-url">
-      <span class="badge">Base URL</span>
-      <input id="baseUrl" placeholder="https://your-deploy.example.com" />
-      <button class="btn outline" id="saveBase">Save</button>
-    </div>
-  </div>
-</header>
-
-<div class="wrap">
-  <div class="grid" style="margin-bottom:16px">
-    <div class="card col-6">
-      <h3>Add User</h3>
-      <div class="row">
-        <div>
-          <label>User ID</label>
-          <input id="u_id" type="number" placeholder="123123" />
-        </div>
-        <div>
-          <label>Birthday</label>
-          <input id="u_bday" type="date" />
-        </div>
-      </div>
-      <div class="row">
-        <div>
-          <label>First name</label>
-          <input id="u_first" placeholder="Mosh" />
-        </div>
-        <div>
-          <label>Last name</label>
-          <input id="u_last" placeholder="Israeli" />
-        </div>
-      </div>
-      <div class="actions">
-        <button class="btn primary" id="btnAddUser">Create user</button>
-        <button class="btn ghost" id="btnUserSample">Fill sample</button>
+  <header>
+    <div class="bar">
+      <div class="logo" aria-hidden="true"></div>
+      <div class="brand">Cost Manager • Admin</div>
+      <div class="sp"></div>
+      <div class="base-url">
+        <span class="badge">Base URL</span>
+        <input id="baseUrl" placeholder="https://your-deploy.example.com" />
+        <button class="btn outline" id="saveBase">Save</button>
       </div>
     </div>
+  </header>
 
-    <div class="card col-6">
-      <h3>Add Cost</h3>
-      <div>
-        <label>Description</label>
-        <input id="c_desc" placeholder="Groceries" />
-      </div>
-      <div class="row3">
-        <div>
-          <label>Category</label>
-          <select id="c_cat">
-            <option value="food">food</option>
-            <option value="health">health</option>
-            <option value="housing">housing</option>
-            <option value="sports">sports</option>
-            <option value="education">education</option>
-          </select>
-        </div>
-        <div>
-          <label>User ID</label>
-          <input id="c_uid" type="number" placeholder="123123" />
-        </div>
-        <div>
-          <label>Sum</label>
-          <input id="c_sum" type="number" step="0.01" placeholder="87.90" />
-        </div>
-      </div>
-      <div class="row">
-        <div>
-          <label>Created at (optional)</label>
-          <input id="c_date" type="date" />
-          <div class="chips" style="margin-top:6px">
-            <span class="chip">Past months are blocked</span>
-            <span class="chip">Empty = server time</span>
+  <div class="wrap">
+    <div class="grid" style="margin-bottom:16px">
+      <div class="card col-6">
+        <h3>Add User</h3>
+        <div class="row">
+          <div>
+            <label>User ID</label>
+            <input id="u_id" type="number" placeholder="123123" />
+          </div>
+          <div>
+            <label>Birthday</label>
+            <input id="u_bday" type="date" />
           </div>
         </div>
-        <div></div>
-      </div>
-      <div class="actions">
-        <button class="btn primary" id="btnAddCost">Create cost</button>
-        <button class="btn ghost" id="btnCostSample">Fill sample</button>
-      </div>
-    </div>
-
-    <div class="card col-8">
-      <h3>Monthly Report</h3>
-      <div class="row3">
-        <div>
-          <label>User ID</label>
-          <input id="r_uid" type="number" placeholder="123123" />
-        </div>
-        <div>
-          <label>Month</label>
-          <input id="r_month" type="month" />
-        </div>
-        <div>
-          <label>&nbsp;</label>
-          <button class="btn primary" id="btnReport">Get report</button>
-        </div>
-      </div>
-      <div class="toolbar" style="margin-top:10px">
-        <button class="btn outline" id="btnExportJson">Export response JSON</button>
-        <button class="btn outline" id="btnCopyReq">Copy request</button>
-        <button class="btn outline" id="btnCopyRes">Copy response</button>
-      </div>
-    </div>
-
-    <div class="card col-4">
-      <h3>Quick Actions</h3>
-      <div class="actions">
-        <button class="btn" id="btnGetUser">Get user by ID</button>
-        <button class="btn" id="btnListUsers">List users</button>
-      </div>
-      <div class="actions" style="margin-top:4px">
-        <button class="btn" id="btnLogs">Show logs</button>
-        <button class="btn" id="btnAbout">About</button>
-        <button class="btn" id="btnHealth">Health</button>
-      </div>
-      <div class="hr"></div>
-      <label>Lookup user id</label>
-      <input id="lu_uid" type="number" placeholder="123123" />
-    </div>
-  </div>
-
-  <div class="panels">
-    <div class="card">
-      <div class="tabs">
-        <div class="tab active" data-tab="req">Request JSON</div>
-        <div class="tab" data-tab="res">Response</div>
-      </div>
-      <pre id="req" class="pre">—</pre>
-      <pre id="res" class="pre" style="display:none">—</pre>
-      <div class="actions">
-        <button class="btn outline" id="clearPane">Clear pane</button>
-      </div>
-    </div>
-    <div class="card">
-      <h3 style="display:flex;align-items:center;gap:8px">Client Logs <span class="badge" id="statusBadge">idle</span></h3>
-      <div class="row">
-        <div>
-          <label>Filter (includes)</label>
-          <input id="logFilter" placeholder="e.g. /api/report or 400" />
-        </div>
-        <div>
-          <label>Controls</label>
-          <div class="actions">
-            <button class="btn warn" id="toggleAutoscroll">Autoscroll: on</button>
-            <button class="btn danger" id="clearLogs">Clear logs</button>
+        <div class="row">
+          <div>
+            <label>First name</label>
+            <input id="u_first" placeholder="Mosh" />
+          </div>
+          <div>
+            <label>Last name</label>
+            <input id="u_last" placeholder="Israeli" />
           </div>
         </div>
+        <div class="actions">
+          <button class="btn primary" id="btnAddUser">Create user</button>
+          <button class="btn ghost" id="btnUserSample">Fill sample</button>
+        </div>
       </div>
-      <pre id="logs" class="pre" style="height:360px"></pre>
+
+      <div class="card col-6">
+        <h3>Add Cost</h3>
+        <div>
+          <label>Description</label>
+          <input id="c_desc" placeholder="Groceries" />
+        </div>
+        <div class="row3">
+          <div>
+            <label>Category</label>
+            <select id="c_cat">
+              <option value="food">food</option>
+              <option value="health">health</option>
+              <option value="housing">housing</option>
+              <option value="sports">sports</option>
+              <option value="education">education</option>
+            </select>
+          </div>
+          <div>
+            <label>User ID</label>
+            <input id="c_uid" type="number" placeholder="123123" />
+          </div>
+          <div>
+            <label>Sum</label>
+            <input id="c_sum" type="number" step="0.01" placeholder="87.90" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Created at (optional)</label>
+            <input id="c_date" type="date" />
+            <div class="chips" style="margin-top:6px">
+              <span class="chip">Past months are blocked</span>
+              <span class="chip">Empty = server time</span>
+            </div>
+          </div>
+          <div></div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="btnAddCost">Create cost</button>
+          <button class="btn ghost" id="btnCostSample">Fill sample</button>
+        </div>
+      </div>
+
+      <div class="card col-8">
+        <h3>Monthly Report</h3>
+        <div class="row3">
+          <div>
+            <label>User ID</label>
+            <input id="r_uid" type="number" placeholder="123123" />
+          </div>
+          <div>
+            <label>Month</label>
+            <input id="r_month" type="month" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn primary" id="btnReport">Get report</button>
+          </div>
+        </div>
+        <div class="toolbar" style="margin-top:10px">
+          <button class="btn outline" id="btnExportJson">Export response JSON</button>
+          <button class="btn outline" id="btnCopyReq">Copy request</button>
+          <button class="btn outline" id="btnCopyRes">Copy response</button>
+        </div>
+      </div>
+
+      <div class="card col-4">
+        <h3>Quick Actions</h3>
+        <div class="actions">
+          <button class="btn" id="btnGetUser">Get user by ID</button>
+          <button class="btn" id="btnListUsers">List users</button>
+        </div>
+        <div class="actions" style="margin-top:4px">
+          <button class="btn" id="btnLogs">Show logs</button>
+          <button class="btn" id="btnAbout">About</button>
+          <button class="btn" id="btnHealth">Health</button>
+        </div>
+        <div class="hr"></div>
+        <label>Lookup user id</label>
+        <input id="lu_uid" type="number" placeholder="123123" />
+      </div>
+    </div>
+
+    <div class="panels">
+      <div class="card">
+        <div class="tabs">
+          <div class="tab active" data-tab="req">Request JSON</div>
+          <div class="tab" data-tab="res">Response</div>
+        </div>
+        <pre id="req" class="pre">—</pre>
+        <pre id="res" class="pre" style="display:none">—</pre>
+        <div class="actions">
+          <button class="btn outline" id="clearPane">Clear pane</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="display:flex;align-items:center;gap:8px">Client Logs <span class="badge" id="statusBadge">idle</span></h3>
+        <div class="row">
+          <div>
+            <label>Filter (includes)</label>
+            <input id="logFilter" placeholder="e.g. /api/report or 400" />
+          </div>
+          <div>
+            <label>Controls</label>
+            <div class="actions">
+              <button class="btn warn" id="toggleAutoscroll">Autoscroll: on</button>
+              <button class="btn danger" id="clearLogs">Clear logs</button>
+            </div>
+          </div>
+        </div>
+        <pre id="logs" class="pre" style="height:360px"></pre>
+      </div>
     </div>
   </div>
-</div>
 
-<div id="toast" class="toast">Copied</div>
+  <div id="toast" class="toast">Copied</div>
 
-<script>
-  // ========= helpers =========
-  const $ = sel => document.querySelector(sel);
-  const reqPre = $('#req');
-  const resPre = $('#res');
-  const logsEl = $('#logs');
-  const statusBadge = $('#statusBadge');
-  const toast = $('#toast');
-  let autoscroll = true;
+  <script>
+    // ========= helpers =========
+    const $ = sel => document.querySelector(sel);
+    const reqPre = $('#req');
+    const resPre = $('#res');
+    const logsEl = $('#logs');
+    const statusBadge = $('#statusBadge');
+    const toast = $('#toast');
+    let autoscroll = true;
 
-  const tabs = document.querySelectorAll('.tab');
-  tabs.forEach(t => t.addEventListener('click', () => {
-    tabs.forEach(x => x.classList.remove('active'));
-    t.classList.add('active');
-    const name = t.dataset.tab;
-    if(name==='req'){ reqPre.style.display='block'; resPre.style.display='none'; }
-    else { reqPre.style.display='none'; resPre.style.display='block'; }
-  }));
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(t => t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      const name = t.dataset.tab;
+      if(name==='req'){ reqPre.style.display='block'; resPre.style.display='none'; }
+      else { reqPre.style.display='none'; resPre.style.display='block'; }
+    }));
 
-  function showToast(msg){ toast.textContent = msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1100); }
-  function setReq(obj){ reqPre.classList.remove('error'); reqPre.textContent = typeof obj==='string' ? obj : JSON.stringify(obj, null, 2); }
-  function setRes(obj, isError){ resPre.classList.toggle('error', !!isError); resPre.textContent = typeof obj==='string' ? obj : JSON.stringify(obj, null, 2); }
-  function setBusy(b){ statusBadge.textContent = b? 'working…' : 'idle'; statusBadge.style.borderColor = b? 'var(--warn)':'var(--border)'; }
+    function showToast(msg){ toast.textContent = msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1100); }
+    function setReq(obj){ reqPre.classList.remove('error'); reqPre.textContent = typeof obj==='string' ? obj : JSON.stringify(obj, null, 2); }
+    function setRes(obj, isError){ resPre.classList.toggle('error', !!isError); resPre.textContent = typeof obj==='string' ? obj : JSON.stringify(obj, null, 2); }
+    function setBusy(b){ statusBadge.textContent = b? 'working…' : 'idle'; statusBadge.style.borderColor = b? 'var(--warn)':'var(--border)'; }
 
-  function log(line){
-    const t = new Date().toISOString();
-    const f = $('#logFilter').value.trim();
-    const entry = `[${t}] ${line}`;
-    if(!f || entry.toLowerCase().includes(f.toLowerCase())){
-      logsEl.textContent += entry + '
-      ';
-      if(autoscroll){ logsEl.scrollTop = logsEl.scrollHeight; }
+    function log(line){
+      const t = new Date().toISOString();
+      const f = $('#logFilter').value.trim();
+      const entry = `[${t}] ${line}`;
+      if(!f || entry.toLowerCase().includes(f.toLowerCase())){
+        logsEl.textContent += entry + '
+';
+        if(autoscroll){ logsEl.scrollTop = logsEl.scrollHeight; }
+      }
     }
-  }
 
-  $('#toggleAutoscroll').addEventListener('click', () => {
-    autoscroll = !autoscroll; $('#toggleAutoscroll').textContent = `Autoscroll: ${autoscroll? 'on':'off'}`;
-  });
-  $('#clearLogs').addEventListener('click', ()=>{ logsEl.textContent=''; });
-  $('#logFilter').addEventListener('input', ()=>{ /* re-rendering not needed: filter applies to new lines */ });
+    $('#toggleAutoscroll').addEventListener('click', () => {
+      autoscroll = !autoscroll; $('#toggleAutoscroll').textContent = `Autoscroll: ${autoscroll? 'on':'off'}`;
+    });
+    $('#clearLogs').addEventListener('click', ()=>{ logsEl.textContent=''; });
+    $('#logFilter').addEventListener('input', ()=>{ /* re-rendering not needed: filter applies to new lines */ });
 
-  // ========= base URL =========
-  const baseInput = $('#baseUrl');
-  const saveBase = $('#saveBase');
-  baseInput.value = localStorage.getItem('cm_base') || location.origin;
-  saveBase.addEventListener('click', ()=>{ localStorage.setItem('cm_base', baseInput.value.trim()); showToast('Saved'); });
-  const API = () => (baseInput.value.trim().replace(/\/$/, ''));
+    // ========= base URL =========
+    const baseInput = $('#baseUrl');
+    const saveBase = $('#saveBase');
+    baseInput.value = localStorage.getItem('cm_base') || location.origin;
+    saveBase.addEventListener('click', ()=>{ localStorage.setItem('cm_base', baseInput.value.trim()); showToast('Saved'); });
+    const API = () => (baseInput.value.trim().replace(/\/$/, ''));
 
-  // ========= HTTP =========
-  async function send(method, path, body){
-    const url = API()+path;
-    setBusy(true); setReq(body? {method, url, body} : `${method} ${url}`);
-    log(`${method} ${url}`);
-    try{
-      const r = await fetch(url, { method, headers: body? {'Content-Type':'application/json'} : undefined, body: body? JSON.stringify(body) : undefined });
-      const text = await r.text();
-      let data; try{ data = JSON.parse(text) } catch{ data = text }
-      const isErr = r.status>=400;
-      setRes({ status:r.status, data }, isErr);
-      log(`→ ${r.status}`);
-      return { status:r.status, data };
-    }catch(err){ setRes({ error:String(err) }, true); log(`ERROR ${err}`); throw err; }
-    finally{ setBusy(false); }
-  }
+    // ========= HTTP =========
+    async function send(method, path, body){
+      const url = API()+path;
+      setBusy(true); setReq(body? {method, url, body} : `${method} ${url}`);
+      log(`${method} ${url}`);
+      try{
+        const r = await fetch(url, { method, headers: body? {'Content-Type':'application/json'} : undefined, body: body? JSON.stringify(body) : undefined });
+        const text = await r.text();
+        let data; try{ data = JSON.parse(text) } catch{ data = text }
+        const isErr = r.status>=400;
+        setRes({ status:r.status, data }, isErr);
+        log(`→ ${r.status}`);
+        return { status:r.status, data };
+      }catch(err){ setRes({ error:String(err) }, true); log(`ERROR ${err}`); throw err; }
+      finally{ setBusy(false); }
+    }
 
-  // ========= Users =========
-  $('#btnUserSample').addEventListener('click', ()=>{
-    $('#u_id').value = 123123; $('#u_first').value = 'Mosh'; $('#u_last').value = 'Israeli'; $('#u_bday').value = '1998-05-10';
-  });
-  $('#btnAddUser').addEventListener('click', async ()=>{
-    const body = { id:Number($('#u_id').value), first_name:$('#u_first').value.trim(), last_name:$('#u_last').value.trim(), birthday:$('#u_bday').value };
-    await send('POST','/api/add', body);
-  });
+    // ========= Users =========
+    $('#btnUserSample').addEventListener('click', ()=>{
+      $('#u_id').value = 123123; $('#u_first').value = 'Mosh'; $('#u_last').value = 'Israeli'; $('#u_bday').value = '1998-05-10';
+    });
+    $('#btnAddUser').addEventListener('click', async ()=>{
+      const body = { id:Number($('#u_id').value), first_name:$('#u_first').value.trim(), last_name:$('#u_last').value.trim(), birthday:$('#u_bday').value };
+      await send('POST','/api/add', body);
+    });
 
-  // ========= Costs =========
-  $('#btnCostSample').addEventListener('click', ()=>{
-    $('#c_desc').value='Groceries'; $('#c_cat').value='food'; $('#c_uid').value=123123; $('#c_sum').value=87.9; $('#c_date').value='';
-  });
-  $('#btnAddCost').addEventListener('click', async ()=>{
-    const body = { description:$('#c_desc').value.trim(), category:$('#c_cat').value, userid:Number($('#c_uid').value), sum:Number($('#c_sum').value) };
-    const d = $('#c_date').value; if(d) body.created_at = d; await send('POST','/api/add', body);
-  });
+    // ========= Costs =========
+    $('#btnCostSample').addEventListener('click', ()=>{
+      $('#c_desc').value='Groceries'; $('#c_cat').value='food'; $('#c_uid').value=123123; $('#c_sum').value=87.9; $('#c_date').value='';
+    });
+    $('#btnAddCost').addEventListener('click', async ()=>{
+      const body = { description:$('#c_desc').value.trim(), category:$('#c_cat').value, userid:Number($('#c_uid').value), sum:Number($('#c_sum').value) };
+      const d = $('#c_date').value; if(d) body.created_at = d; await send('POST','/api/add', body);
+    });
 
-  // ========= Report =========
-  $('#btnReport').addEventListener('click', async ()=>{
-    const uid = Number($('#r_uid').value); const ym = $('#r_month').value; if(!ym){ showToast('Pick month'); return; }
-    const [y,m] = ym.split('-'); const q = `?id=${encodeURIComponent(uid)}&year=${encodeURIComponent(y)}&month=${encodeURIComponent(Number(m))}`;
-    await send('GET', `/api/report${q}`); tabs.forEach(x=>x.classList.remove('active')); tabs[1].classList.add('active'); reqPre.style.display='none'; resPre.style.display='block';
-  });
+    // ========= Report =========
+    $('#btnReport').addEventListener('click', async ()=>{
+      const uid = Number($('#r_uid').value); const ym = $('#r_month').value; if(!ym){ showToast('Pick month'); return; }
+      const [y,m] = ym.split('-'); const q = `?id=${encodeURIComponent(uid)}&year=${encodeURIComponent(y)}&month=${encodeURIComponent(Number(m))}`;
+      await send('GET', `/api/report${q}`); tabs.forEach(x=>x.classList.remove('active')); tabs[1].classList.add('active'); reqPre.style.display='none'; resPre.style.display='block';
+    });
 
-  // ========= Quick actions =========
-  $('#btnGetUser').addEventListener('click', async ()=>{ const uid = Number($('#lu_uid').value); await send('GET', `/api/users/${encodeURIComponent(uid)}`); });
-  $('#btnListUsers').addEventListener('click', async ()=>{ await send('GET', '/api/users'); });
-  $('#btnLogs').addEventListener('click', async ()=>{ await send('GET', '/api/logs'); });
-  $('#btnAbout').addEventListener('click', async ()=>{ await send('GET', '/api/about'); });
-  $('#btnHealth').addEventListener('click', async ()=>{ await send('GET', '/health'); });
+    // ========= Quick actions =========
+    $('#btnGetUser').addEventListener('click', async ()=>{ const uid = Number($('#lu_uid').value); await send('GET', `/api/users/${encodeURIComponent(uid)}`); });
+    $('#btnListUsers').addEventListener('click', async ()=>{ await send('GET', '/api/users'); });
+    $('#btnLogs').addEventListener('click', async ()=>{ await send('GET', '/api/logs'); });
+    $('#btnAbout').addEventListener('click', async ()=>{ await send('GET', '/api/about'); });
+    $('#btnHealth').addEventListener('click', async ()=>{ await send('GET', '/health'); });
 
-  // ========= Pane tools =========
-  $('#clearPane').addEventListener('click', ()=>{ reqPre.textContent='—'; resPre.textContent='—'; resPre.classList.remove('error'); });
-  $('#btnCopyReq').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(reqPre.textContent); showToast('Request copied'); }catch{ showToast('Copy failed'); } });
-  $('#btnCopyRes').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(resPre.textContent); showToast('Response copied'); }catch{ showToast('Copy failed'); } });
-  $('#btnExportJson').addEventListener('click', ()=>{
-    try{
-      const active = resPre.textContent.trim(); if(!active || active==='—') { showToast('No response'); return; }
-      const blob = new Blob([active], {type:'application/json'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `response-${Date.now()}.json`; a.click(); URL.revokeObjectURL(a.href);
-    }catch{ showToast('Export failed'); }
-  });
+    // ========= Pane tools =========
+    $('#clearPane').addEventListener('click', ()=>{ reqPre.textContent='—'; resPre.textContent='—'; resPre.classList.remove('error'); });
+    $('#btnCopyReq').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(reqPre.textContent); showToast('Request copied'); }catch{ showToast('Copy failed'); } });
+    $('#btnCopyRes').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(resPre.textContent); showToast('Response copied'); }catch{ showToast('Copy failed'); } });
+    $('#btnExportJson').addEventListener('click', ()=>{
+      try{
+        const active = resPre.textContent.trim(); if(!active || active==='—') { showToast('No response'); return; }
+        const blob = new Blob([active], {type:'application/json'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `response-${Date.now()}.json`; a.click(); URL.revokeObjectURL(a.href);
+      }catch{ showToast('Export failed'); }
+    });
 
-  // ========= init =========
-  (function init(){
-    log('Dashboard ready. Set Base URL to your API and start.'); setBusy(false);
-  })();
-</script>
+    // ========= init =========
+    (function init(){
+      log('Dashboard ready. Set Base URL to your API and start.'); setBusy(false);
+    })();
+  </script>
 </body>
 </html>

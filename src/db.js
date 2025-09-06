@@ -1,11 +1,60 @@
 'use strict';
-
+/**
+ * Mongo connection utilities.
+ * - Do NOT put a db name in MONGODB_URI. We pass dbName explicitly per NODE_ENV.
+ * - Ensures critical indexes exist before serving requests.
+ */
 const mongoose = require('mongoose');
 
-async function connect(uri) {
-    mongoose.set('strictQuery', true);
-    await mongoose.connect(uri);
-    return mongoose.connection;
+// Models whose indexes we care about in tests/production
+const User = require('./models/user.model');
+const Cost = require('./models/cost.model');
+const Report = require('./models/report.model');
+const Log = require('./models/log.model');
+
+const DB_BY_ENV = {
+    development: 'costmanager_dev',
+    test: 'costmanager_test',
+    production: 'costmanager_prod',
+};
+
+/** Resolve dbName by environment. */
+function getDbName(env = process.env.NODE_ENV || 'development') {
+    return DB_BY_ENV[env] || DB_BY_ENV.development;
 }
 
-module.exports = { connect };
+/** Ensure indexes are created (id unique, report uniq compound, etc.). */
+async function ensureIndexes() {
+    await Promise.all([
+        User.syncIndexes(),   // unique index on id
+        Cost.init(),
+        Report.init(), // unique (userid,year,month)
+        Log.init(),
+    ]);
+}
+
+/**
+ * Connect to MongoDB using:
+ *   - process.env.MONGODB_URI (without db name)
+ *   - dbName derived from NODE_ENV
+ * Also builds indexes before returning.
+ */
+async function connectDB() {
+    const uri = process.env.MONGODB_URI;
+    const env = process.env.NODE_ENV || 'development';
+    const dbName = getDbName(env);
+    if (!uri) throw new Error('MONGODB_URI is missing');
+
+    await mongoose.connect(uri, {
+        dbName,
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 10_000,
+    });
+
+    await ensureIndexes();
+
+    const { name } = mongoose.connection;
+    console.log(`[mongo] connected to db="${name}" (env=${env})`);
+}
+
+module.exports = { connectDB, ensureIndexes, getDbName };

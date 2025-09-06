@@ -1,36 +1,29 @@
-'use strict';
+const { getCachedOrCompute } = require('../services/reports.service');
+const { notFound, ok } = require('../utils/responses');
+const { exists: userExists } = require('../services/users.service');
 
-const Joi = require('joi');
-const { validate } = require('../middleware/validate');
-const { buildMonthlyReport } = require('../utils/buildReport');
-const { isPastMonthYear } = require('../utils/dates');
-const Report = require('../models/Report');
+/**
+ * Controller for handling `GET /api/report` requests.
+ * Returns the report data for a specific user and month.
+ *
+ * Design Pattern: Uses **Computed Materialization** pattern.
+ * - For the current month, the data is computed live.
+ * - For past months, it first checks for a cached report. If not found, it computes and stores the result.
+ *
+ * @param {Request} req - Express request object.
+ * @param {Response} res - Express response object.
+ */
+const getMonthly = async (req, res) => {
+    const { id, year, month } = req.query;
 
-const reportQuerySchema = Joi.object({
-    id: Joi.number().required(),
-    year: Joi.number().integer().min(1970).required(),
-    month: Joi.number().integer().min(1).max(12).required()
-});
-const reportQueryValidator = validate(reportQuerySchema, 'query');
+    // Validate user existence
+    if (!(await userExists(id))) return notFound(res, 'user not found');
 
-async function getMonthlyReport(req, res, next) {
-    try {
-        const { id, year, month } = req.query;
+    // Fetch or compute the report
+    const result = await getCachedOrCompute(id, Number(year), Number(month));
 
-        if (isPastMonthYear(Number(year), Number(month))) {
-            const cached = await Report.findOne({ userid: Number(id), year: Number(year), month: Number(month) }).lean();
-            if (cached) return res.json(cached);
+    // Return the result
+    return ok(res, result);
+};
 
-            const report = await buildMonthlyReport(id, year, month);
-            const saved = await Report.create(report);
-            return res.json({ userid: saved.userid, year: saved.year, month: saved.month, costs: saved.costs });
-        }
-
-        const live = await buildMonthlyReport(id, year, month);
-        res.json(live);
-    } catch (err) {
-        next(err);
-    }
-}
-
-module.exports = { getMonthlyReport, reportQueryValidator };
+module.exports = { getMonthly };

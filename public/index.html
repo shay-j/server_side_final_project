@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cost Manager • Admin Dashboard</title>
+  <title>AddController Manager • Admin Dashboard</title>
   <style>
     :root{
       --bg:#0a0f1e; --card:#0f162c; --card2:#0c1326; --muted:#a9b3c9; --text:#e9edf6;
@@ -32,6 +32,11 @@
     .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid var(--border);background:rgba(255,255,255,.05)}
     .chip{background:var(--chip); border:1px solid var(--border); padding:6px 10px; border-radius:999px; font-size:12px}
     .mono{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .dot{width:10px;height:10px;border-radius:50%;}
+    .dot.idle{background:#6b7280}
+    .dot.work{background:var(--warn)}
+    .dot.ok{background:var(--ok)}
+    .dot.err{background:var(--err)}
 
     .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
     .col-4{grid-column:span 4}
@@ -79,32 +84,21 @@
 
     .toolbar{display:flex;gap:8px;flex-wrap:wrap}
     .chips{display:flex;gap:6px;flex-wrap:wrap}
-
     .toast{position:fixed; right:18px; bottom:18px; background:rgba(16,24,48,.95); border:1px solid var(--border);
       color:var(--text); padding:10px 12px; border-radius:10px; box-shadow:0 12px 30px rgba(0,0,0,.35); opacity:0; transform: translateY(10px); transition:.2s}
     .toast.show{opacity:1; transform:none}
-
-    /* status LED */
-    .led{display:inline-flex;align-items:center;gap:8px}
-    .dot{width:10px;height:10px;border-radius:50%;}
-    .dot.idle{background:#6b7280}
-    .dot.work{background:var(--warn)}
-    .dot.ok{background:var(--ok)}
-    .dot.err{background:var(--err)}
   </style>
 </head>
 <body>
 <header>
   <div class="bar">
     <div class="logo" aria-hidden="true"></div>
-    <div class="brand">Cost Manager • Admin</div>
+    <div class="brand">AddController Manager • Admin</div>
     <div class="sp"></div>
-
-    <!-- Base URL (auto-detect + auto-save, no manual Save) -->
     <div class="mono chip" id="hostPortChip" title="Resolved host:port">—</div>
     <span class="badge">Base URL</span>
-    <input id="baseUrl" class="mono" style="width:360px" placeholder="http://localhost:5173" />
-    <span class="badge led"><span id="led" class="dot idle"></span><span id="statusBadge">idle</span></span>
+    <input id="baseUrl" class="mono" style="width:360px" placeholder="http://localhost:3000" />
+    <div class="badge"><span id="led" class="dot idle"></span><span id="statusBadge">idle</span></div>
   </div>
 </header>
 
@@ -139,7 +133,7 @@
     </div>
 
     <div class="card col-6">
-      <h3>Add Cost</h3>
+      <h3>Add AddController</h3>
       <div>
         <label>Description</label>
         <input id="c_desc" placeholder="Groceries" />
@@ -256,187 +250,145 @@
 <div id="toast" class="toast">Copied</div>
 
 <script>
-  // ========= DOM refs =========
+  // ===== DOM =====
   const $ = s => document.querySelector(s);
-  const reqPre = $('#req');
-  const resPre = $('#res');
-  const logsEl = $('#logs');
-  const toast = $('#toast');
-  const baseInput = $('#baseUrl');
-  const statusBadge = $('#statusBadge');
-  const led = $('#led');
-  const hostPortChip = $('#hostPortChip');
+  const reqPre = $('#req'), resPre = $('#res'), logsEl = $('#logs'), toast = $('#toast');
+  const baseInput = $('#baseUrl'), statusBadge = $('#statusBadge'), led = $('#led'), hostPortChip = $('#hostPortChip');
 
-  // ========= state =========
-  const DEFAULT_BASE = location.origin.replace(/\/$/, ''); // auto-detect host + port
+  // ===== State =====
+  const DEFAULT_BASE = location.origin.replace(/\/$/, '');
   let autoscroll = true;
-  let logs = []; // [{ts, line}]
+  let logs = [];
   let busyCount = 0;
 
-  // ========= UI helpers =========
-  const tabs = document.querySelectorAll('.tab');
-  tabs.forEach(t => t.addEventListener('click', () => {
-    tabs.forEach(x => x.classList.remove('active'));
+  // ===== Tabs =====
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
     t.classList.add('active');
     const name = t.dataset.tab;
-    if(name==='req'){ reqPre.style.display='block'; resPre.style.display='none'; }
-    else { reqPre.style.display='none'; resPre.style.display='block'; }
+    reqPre.style.display = name==='req' ? 'block':'none';
+    resPre.style.display = name==='res' ? 'block':'none';
   }));
 
-  function showToast(msg){ toast.textContent = msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1100); }
-  function setReq(obj){ reqPre.classList.remove('error'); reqPre.textContent = typeof obj==='string' ? obj : JSON.stringify(obj, null, 2); }
-  function setRes(obj, isError){ resPre.classList.toggle('error', !!isError); resPre.textContent = typeof obj==='string' ? obj : JSON.stringify(obj, null, 2); }
+  // ===== Toast + panes =====
+  function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1100); }
+  function setReq(obj){ reqPre.classList.remove('error'); reqPre.textContent = typeof obj==='string'? obj: JSON.stringify(obj,null,2); }
+  function setRes(obj,isError){ resPre.classList.toggle('error',!!isError); resPre.textContent = typeof obj==='string'? obj: JSON.stringify(obj,null,2); }
 
-  function setBusy(b){
-    if (b) busyCount++; else busyCount = Math.max(0, busyCount-1);
-    const working = busyCount > 0;
-    statusBadge.textContent = working ? 'working…' : 'idle';
-    led.className = 'dot ' + (working ? 'work' : 'idle');
-  }
-  function setOK(){ statusBadge.textContent = 'online'; led.className = 'dot ok'; }
-  function setERR(){ statusBadge.textContent = 'error'; led.className = 'dot err'; }
+  // ===== Status LED =====
+  function setBusy(b){ busyCount += b?1:-1; if(busyCount<0) busyCount=0; const working = busyCount>0; statusBadge.textContent = working?'working…':'idle'; led.className='dot '+(working?'work':'idle'); }
+  function setOK(){ statusBadge.textContent='online'; led.className='dot ok'; }
+  function setERR(){ statusBadge.textContent='error'; led.className='dot err'; }
 
-  // ========= Base URL =========
-  function getBase(){
-    const v = baseInput.value.trim();
-    return v ? v.replace(/\/$/, '') : DEFAULT_BASE;
-  }
+  // ===== Base URL =====
   function parseHostPort(u){
-    try{
-      const url = new URL(u);
-      const port = url.port || (url.protocol === 'https:' ? '443' : '80');
-      return `${url.hostname}:${port}`;
-    }catch{ return '—'; }
+    try{ const url=new URL(u); const port=url.port||(url.protocol==='https:'?'443':'80'); return `${url.hostname}:${port}`; }
+    catch{ return '—'; }
   }
-  function saveBase(v){
-    localStorage.setItem('cm_base', v);
-    hostPortChip.textContent = parseHostPort(v);
-  }
+  function getBase(){ const v = baseInput?.value?.trim?.() ?? ''; return v? v.replace(/\/$/,''): DEFAULT_BASE; }
+  function saveBase(v){ localStorage.setItem('cm_base',v); hostPortChip && (hostPortChip.textContent = parseHostPort(v)); }
   (function initBase(){
-    const saved = (localStorage.getItem('cm_base') || '').trim();
-    const use = saved ? saved : DEFAULT_BASE; // auto-detect if nothing saved
-    baseInput.value = use;
+    const saved = (localStorage.getItem('cm_base')||'').trim();
+    const use = saved || DEFAULT_BASE;
+    if (baseInput) baseInput.value = use;
     saveBase(use);
   })();
-  // auto-save on change with debounce
-  let baseTimer = null;
-  baseInput.addEventListener('input', ()=>{
+  let baseTimer=null;
+  baseInput && baseInput.addEventListener('input', ()=>{
     clearTimeout(baseTimer);
     baseTimer = setTimeout(()=>{
-      const v = baseInput.value.trim().replace(/\/$/, '') || DEFAULT_BASE;
-      // validate URL
-      try{ new URL(v); saveBase(v); }catch{ /* keep previous */ }
-    }, 250);
+      const v = (baseInput.value||'').trim().replace(/\/$/,'') || DEFAULT_BASE;
+      try{ new URL(v); saveBase(v);}catch{ hostPortChip && (hostPortChip.textContent='—'); }
+    },250);
   });
 
-  // ========= Logs with working filter =========
+  // ===== Logs + filter =====
   function renderLogs(){
-    const f = $('#logFilter').value.trim().toLowerCase();
-    const view = f ? logs.filter(x => x.line.toLowerCase().includes(f)) : logs;
-    logsEl.textContent = view.map(x => x.line).join('\n');
-    if (autoscroll) logsEl.scrollTop = logsEl.scrollHeight;
+    const f = ($('#logFilter')?.value||'').trim().toLowerCase();
+    const view = f? logs.filter(x=>x.line.toLowerCase().includes(f)) : logs;
+    logsEl && (logsEl.textContent = view.map(x=>x.line).join('\n'));
+    if(autoscroll && logsEl) logsEl.scrollTop = logsEl.scrollHeight;
   }
-  function log(line){
-    const t = new Date().toISOString();
-    const entry = `[${t}] ${line}`;
-    logs.push({ ts: Date.now(), line: entry });
-    renderLogs();
-  }
-  $('#toggleAutoscroll').addEventListener('click', () => {
-    autoscroll = !autoscroll;
-    $('#toggleAutoscroll').textContent = `Autoscroll: ${autoscroll? 'on':'off'}`;
-  });
-  $('#clearLogs').addEventListener('click', ()=>{ logs = []; renderLogs(); });
-  $('#logFilter').addEventListener('input', renderLogs);
+  function log(line){ const t=new Date().toISOString(); logs.push({ts:Date.now(), line:`[${t}] ${line}`}); renderLogs(); }
+  $('#toggleAutoscroll')?.addEventListener('click', ()=>{ autoscroll=!autoscroll; const b=$('#toggleAutoscroll'); if(b) b.textContent=`Autoscroll: ${autoscroll?'on':'off'}`; });
+  $('#clearLogs')?.addEventListener('click', ()=>{ logs=[]; renderLogs(); });
+  $('#logFilter')?.addEventListener('input', renderLogs);
 
-  // ========= HTTP =========
-  async function send(method, path, body){
-    const url = getBase() + path;
+  // ===== HTTP =====
+  async function send(method,path,body){
+    const base = getBase();
+    const url = base + path;
     setBusy(true);
-    setReq(body? {method, url, body} : `${method} ${url}`);
+    setReq(body? {method,url,body}: `${method} ${url}`);
     log(`${method} ${url}`);
     try{
-      const r = await fetch(url, {
-        method,
-        headers: body? {'Content-Type':'application/json'} : undefined,
-        body: body? JSON.stringify(body) : undefined
-      });
-      const text = await r.text();
-      let data; try{ data = JSON.parse(text) } catch{ data = text }
+      const r = await fetch(url, { method, headers: body? {'Content-Type':'application/json'}: undefined, body: body? JSON.stringify(body): undefined });
+      const text = await r.text(); let data; try{ data=JSON.parse(text);}catch{ data=text; }
       const isErr = r.status >= 400;
-      setRes({ status:r.status, data }, isErr);
+      setRes({status:r.status, data}, isErr);
       log(`→ ${r.status}`);
-      if (!isErr) setOK(); else setERR();
-      return { status:r.status, data };
+      if(!isErr) setOK(); else setERR();
+      return {status:r.status,data};
     }catch(err){
-      setRes({ error:String(err) }, true);
-      log(`ERROR ${err}`);
-      setERR();
-      throw err;
-    }finally{
-      setBusy(false);
-    }
+      setRes({error:String(err)}, true); log(`ERROR ${err}`); setERR(); throw err;
+    }finally{ setBusy(false); }
   }
 
-  // ========= Users =========
-  $('#btnUserSample').addEventListener('click', ()=>{
-    $('#u_id').value = 123123; $('#u_first').value = 'Mosh'; $('#u_last').value = 'Israeli'; $('#u_bday').value = '1998-05-10';
+  // ===== Users =====
+  $('#btnUserSample')?.addEventListener('click', ()=>{
+    $('#u_id').value=123123; $('#u_first').value='Mosh'; $('#u_last').value='Israeli'; $('#u_bday').value='1998-05-10';
   });
-  $('#btnAddUser').addEventListener('click', async ()=>{
-    const body = { id:Number($('#u_id').value), first_name:$('#u_first').value.trim(), last_name:$('#u_last').value.trim(), birthday:$('#u_bday').value };
+  $('#btnAddUser')?.addEventListener('click', async ()=>{
+    const body={ id:Number($('#u_id').value), first_name:$('#u_first').value.trim(), last_name:$('#u_last').value.trim(), birthday:$('#u_bday').value };
     await send('POST','/api/add', body);
   });
 
-  // ========= Costs =========
-  $('#btnCostSample').addEventListener('click', ()=>{
+  // ===== Costs =====
+  $('#btnCostSample')?.addEventListener('click', ()=>{
     $('#c_desc').value='Groceries'; $('#c_cat').value='food'; $('#c_uid').value=123123; $('#c_sum').value=87.9; $('#c_date').value='';
   });
-  $('#btnAddCost').addEventListener('click', async ()=>{
-    const body = { description:$('#c_desc').value.trim(), category:$('#c_cat').value, userid:Number($('#c_uid').value), sum:Number($('#c_sum').value) };
-    const d = $('#c_date').value; if(d) body.created_at = d; await send('POST','/api/add', body);
+  $('#btnAddCost')?.addEventListener('click', async ()=>{
+    const body={ description:$('#c_desc').value.trim(), category:$('#c_cat').value, userid:Number($('#c_uid').value), sum:Number($('#c_sum').value) };
+    const d=$('#c_date').value; if(d) body.created_at=d;
+    await send('POST','/api/add', body);
   });
 
-  // ========= Report =========
-  $('#btnReport').addEventListener('click', async ()=>{
-    const uid = Number($('#r_uid').value);
-    const ym = $('#r_month').value; if(!ym){ showToast('Pick month'); return; }
-    const [y,m] = ym.split('-'); const q = `?id=${encodeURIComponent(uid)}&year=${encodeURIComponent(y)}&month=${encodeURIComponent(Number(m))}`;
+  // ===== Report =====
+  $('#btnReport')?.addEventListener('click', async ()=>{
+    const uid=Number($('#r_uid').value); const ym=$('#r_month').value; if(!ym){ showToast('Pick month'); return; }
+    const [y,m]=ym.split('-'); const q=`?id=${encodeURIComponent(uid)}&year=${encodeURIComponent(y)}&month=${encodeURIComponent(Number(m))}`;
     await send('GET', `/api/report${q}`);
-    tabs.forEach(x=>x.classList.remove('active')); tabs[1].classList.add('active'); reqPre.style.display='none'; resPre.style.display='block';
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelector('.tab[data-tab="res"]')?.classList.add('active');
+    reqPre.style.display='none'; resPre.style.display='block';
   });
 
-  // ========= Quick actions =========
-  $('#btnGetUser').addEventListener('click', async ()=>{
-    const uid = Number($('#lu_uid').value);
-    await send('GET', `/api/users/${encodeURIComponent(uid)}`);
+  // ===== Quick actions =====
+  $('#btnGetUser')?.addEventListener('click', async ()=>{
+    const uid=Number($('#lu_uid').value); await send('GET', `/api/users/${encodeURIComponent(uid)}`);
   });
-  $('#btnListUsers').addEventListener('click', async ()=>{ await send('GET', '/api/users'); });
-  $('#btnLogs').addEventListener('click', async ()=>{ await send('GET', '/api/logs'); });
-  $('#btnAbout').addEventListener('click', async ()=>{ await send('GET', '/api/about'); });
-  $('#btnHealth').addEventListener('click', async ()=>{ await send('GET', '/health'); });
+  $('#btnListUsers')?.addEventListener('click', async ()=>{ await send('GET','/api/users'); });
+  $('#btnLogs')?.addEventListener('click', async ()=>{ await send('GET','/api/logs'); });
+  $('#btnAbout')?.addEventListener('click', async ()=>{ await send('GET','/api/aboutController'); });
+  $('#btnHealth')?.addEventListener('click', async ()=>{ await send('GET','/health'); });
 
-  // ========= Pane tools =========
-  $('#clearPane').addEventListener('click', ()=>{ reqPre.textContent='—'; resPre.textContent='—'; resPre.classList.remove('error'); });
-  $('#btnCopyReq').addEventListener('click', async ()=>{
-    try{ await navigator.clipboard.writeText(reqPre.textContent); showToast('Request copied'); }catch{ showToast('Copy failed'); }
-  });
-  $('#btnCopyRes').addEventListener('click', async ()=>{
-    try{ await navigator.clipboard.writeText(resPre.textContent); showToast('Response copied'); }catch{ showToast('Copy failed'); }
-  });
-  $('#btnExportJson').addEventListener('click', ()=>{
+  // ===== Pane tools =====
+  $('#clearPane')?.addEventListener('click', ()=>{ reqPre.textContent='—'; resPre.textContent='—'; resPre.classList.remove('error'); });
+  $('#btnCopyReq')?.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(reqPre.textContent); showToast('Request copied'); }catch{ showToast('Copy failed'); }});
+  $('#btnCopyRes')?.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(resPre.textContent); showToast('Response copied'); }catch{ showToast('Copy failed'); }});
+  $('#btnExportJson')?.addEventListener('click', ()=>{
     try{
-      const active = resPre.textContent.trim(); if(!active || active==='—') { showToast('No response'); return; }
-      const blob = new Blob([active], {type:'application/json'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `response-${Date.now()}.json`; a.click(); URL.revokeObjectURL(a.href);
+      const active=resPre.textContent.trim(); if(!active||active==='—'){ showToast('No response'); return; }
+      const blob=new Blob([active],{type:'application/json'}); const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob); a.download=`response-${Date.now()}.json`; a.click(); URL.revokeObjectURL(a.href);
     }catch{ showToast('Export failed'); }
   });
 
-  // ========= init =========
+  // ===== Init =====
   (function init(){
     log('Dashboard ready. Base URL auto-detected from current origin. You can override it above.');
-    // initial LED state
-    led.className = 'dot idle';
-    hostPortChip.title = 'Resolved host:port';
+    led.className='dot idle';
+    hostPortChip && (hostPortChip.title='Resolved host:port');
   })();
 </script>
 </body>

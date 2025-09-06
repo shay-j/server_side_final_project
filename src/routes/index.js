@@ -1,33 +1,72 @@
 'use strict';
 
+/**
+ * API Router (single entry point).
+ *
+ * Responsibilities:
+ * - Map all required endpoints per project spec.
+ * - Run validation middleware (Joi) before controllers.
+ * - Tag request with endpoint name (res.locals.endpoint) so requestLogger can persist it.
+ * - Use async middleware to forward rejections to the global error handler.
+ *
+ * Endpoints:
+ *   POST /api/add                  -> addCtrl.add            (creates user | cost; validator selected inline)
+ *   GET  /api/report               -> reportCtrl.getMonthly  (?id&year&month)
+ *   GET  /api/users                -> usersCtrl.list
+ *   GET  /api/users/:id            -> usersCtrl.getById
+ *   GET  /api/logs                 -> logsCtrl.listLogs
+ *   GET  /api/about                -> aboutCtrl.about
+ *
+ * Notes:
+ * - /health is wired in app.js (non-API).
+ * - Logging: requestLogger (in app.js) writes one log per request via Pino + Mongo.
+ *   This router sets res.locals.endpoint so each access is recorded with a logical name.
+ */
+
 const express = require('express');
+const asyncMw = require('../middleware/async');
+
+const {
+  validateReportQuery,
+  validateUserIdParam,
+  validateAddUser,
+  validateAddCost,
+} = require('../middleware/validate');
+
+const addCtrl = require('../controllers/add.controller');
+const reportCtrl = require('../controllers/report.controller');
+const usersCtrl = require('../controllers/users.controller');
+const logsCtrl = require('../controllers/log.controller');
+const aboutCtrl = require('../controllers/about.controller');
+
 const router = express.Router();
 
-const { addCost, addCostValidator } = require('../controllers/cost.controller');
-const { addUser, addUserValidator, getUserById, listUsers } = require('../controllers/user.controller');
-const { getMonthlyReport, reportQueryValidator } = require('../controllers/report.controller');
-const { about } = require('../controllers/about.controller');
-const { listLogs } = require('../controllers/log.controller');
+/** Tag the current endpoint so requestLogger can persist it. */
+function endpoint(name) {
+  return (req, res, next) => {
+    res.locals.endpoint = name;
+    next();
+  };
+}
 
 /**
- * The doc uses /api/add for both adding a user and adding a cost.
- * We dispatch by inspecting the body fields.
+ * Inline validator chooser for POST /api/add.
+ * No separate module export to avoid duplication.
+ * If a body looks like a User -> validateAddUser; otherwise validateAddCost.
  */
-router.post('/api/add', (req, res, next) => {
-  const body = req.body || {};
-  const isUser = 'id' in body && 'first_name' in body && 'last_name' in body && 'birthday' in body;
-  const isCost = 'userid' in body && 'description' in body && 'category' in body && 'sum' in body;
+function pickAddValidator(req, res, next) {
+  const b = req.body || {};
+  const looksLikeUser =
+      b && typeof b === 'object' && 'id' in b && ('first_name' in b || 'last_name' in b);
+  return looksLikeUser ? validateAddUser(req, res, next) : validateAddCost(req, res, next);
+}
 
-  if (isUser) return addUserValidator(req, res, () => addUser(req, res, next));
-  if (isCost) return addCostValidator(req, res, () => addCost(req, res, next));
-
-  return res.status(400).json({ error: 'bad_request', message: 'Body must match either user or cost schema.' });
-});
-
-router.get('/api/report', reportQueryValidator, getMonthlyReport);
-router.get('/api/users', listUsers);
-router.get('/api/users/:id', getUserById);
-router.get('/api/about', about);
-router.get('/api/logs', listLogs);
+/* Routes */
+router.post('/add', endpoint('add'), pickAddValidator, asyncMw(addCtrl.add));
+router.get('/report', endpoint('reports.getMonthly'), validateReportQuery, asyncMw(reportCtrl.getMonthly));
+router.get('/users', endpoint('users.list'), asyncMw(usersCtrl.list));
+router.get('/users/:id', endpoint('users.getById'), validateUserIdParam, asyncMw(usersCtrl.getById));
+router.get('/logs', endpoint('logs.list'), asyncMw(logsCtrl.list));
+router.get('/about', endpoint('about'), asyncMw(aboutCtrl.about));
 
 module.exports = router;

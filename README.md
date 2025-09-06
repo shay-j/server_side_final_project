@@ -1,4 +1,4 @@
-# Cost Manager API (Final Project)
+# AddController Manager API (Final Project)
 
 Node.js + Express + MongoDB Atlas + Mongoose + Pino.  
 Implements users, costs, monthly reports, request logging, and validation.
@@ -40,9 +40,9 @@ We're using the Express generator layout with added `src/` modules:
 bin/www               # server bootstrap (listens after Mongo connects)
 app.js                # Express app, middleware, routes mount
 src/
-  controllers/        # cost, user, report, about, logs
+  controllers/        # cost, user, report, aboutController, logs
   middleware/         # validate, errorHandler, requestLogger
-  models/             # User, Cost, Log, Report
+  models/             # User, AddController, LogController, Report
   utils/              # constants, date utils, report builder
   db.js               # mongoose connection
   logger.js           # pino + pino-http
@@ -105,7 +105,7 @@ Health check: http://localhost:3000/health → `{ "ok": true }`
 irm http://localhost:3000/health
 
 # About (team)
-irm http://localhost:3000/api/about
+irm http://localhost:3000/api/aboutController
 
 # Add required user (id 123123)
 irm -Method Post -Uri http://localhost:3000/api/add -ContentType 'application/json' -Body '{ "id":123123, "first_name":"mosh", "last_name":"israeli", "birthday":"1990-01-01" }'
@@ -142,7 +142,7 @@ irm http://localhost:3000/api/logs
 (Use these after adding the user and a cost via the POSTs above.)
 
 - http://localhost:3000/health  
-- http://localhost:3000/api/about  
+- http://localhost:3000/api/aboutController  
 - http://localhost:3000/api/users  
 - http://localhost:3000/api/users/123123  
 - http://localhost:3000/api/report?id=123123&year=2025&month=8  
@@ -230,7 +230,7 @@ node scripts/cleanup.js --id=123123 --first=mosh --last=israeli --birthday=1990-
 ## Endpoints
 
 - `GET /health` → `{ ok: true }`
-- `GET /api/about` → `[ { first_name, last_name }, ... ]`
+- `GET /api/aboutController` → `[ { first_name, last_name }, ... ]`
 - `POST /api/add` (user) → body: `{ id, first_name, last_name, birthday }`  
   - `201` on success; `409` if `id` already exists
 - `POST /api/add` (cost) → body: `{ userid, description, category, sum, [date] }`  
@@ -259,7 +259,7 @@ node scripts/cleanup.js --id=123123 --first=mosh --last=israeli --birthday=1990-
 ## 60-Second Demo Script
 
 1. Open `/health` → show `{ ok: true }`.  
-2. `/api/about` → show only names.  
+2. `/api/aboutController` → show only names.  
 3. `POST /api/add` (user 123123) → shows `201` **or** `409 user_exists`.  
 4. `POST /api/add` (cost: milk, food, 10) → `201`.  
 5. `/api/report?id=123123&year=YYYY&month=MM` → shows “milk” in `food`.  

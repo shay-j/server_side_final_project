@@ -1,56 +1,81 @@
 'use strict';
 
-require('dotenv').config();
+/**
+ * Express server configuration.
+ * - Reads environment variables and sets up middleware.
+ * - Initializes the database connection.
+ * - Maps all API routes and error handling.
+ */
 
-const createError = require('http-errors');
+require('dotenv').config({
+  path:
+      process.env.NODE_ENV === 'production'
+          ? '.env.prod'
+          : process.env.NODE_ENV === 'test'
+              ? '.env.test'
+              : '.env',
+});
+
 const express = require('express');
 const path = require('path');
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
+const pinoHttp = require('pino-http')();
+const { connectDB } = require('./db');
 
-const { httpLogger } = require('./logger');
-const { requestLogger } = require('./middleware/requestLogger');
-const { errorHandler } = require('./middleware/errorHandler');
+// Import routes
 const routes = require('./routes');
-
-// connect to mongo
-const { connect } = require('./db');
-if (process.env.NODE_ENV !== 'test') {
-  connect(process.env.MONGODB_URI).catch((err) => {
-    console.error('Failed to connect to MongoDB:', err);
-  });
-}
 
 const app = express();
 
-// view engine setup
-app.set('views', path.join(__dirname, '..', 'views'));
-app.set('view engine', 'pug');
+// Middleware
+// Logging middleware using Pino for request logs
+app.use(pinoHttp);
 
-// middleware
-app.use(cors());
-app.use(httpLogger);
+// JSON and URL-encoded body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+
+// Serve static files (dashboard, images, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// persist logs to Mongo
-app.use(requestLogger());
+// Root route - serves index.html
+app.get('/', (_req, res) =>
+    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'))
+);
 
-// Home page
-app.use(express.static('public'));
+// Health check route - for monitoring server health
+app.get('/health', (_req, res) => res.status(200).json({ ok: true }));
 
-// API routes
-app.use(routes);
+// API Routes
+// All API routes are handled through routes/index.js
+app.use('/api', routes);
 
-// health
-app.get('/health', (req, res) => res.json({ ok: true }));
-
-// 404 → error handler
-app.use(function (req, res, next) {
-  next(createError(404));
+// Error handling
+// 404 handler for routes not found
+app.use((req, res, _next) => {
+  res.status(404).json({ message: 'Not Found' });
 });
-app.use(errorHandler);
+
+// Generic error handler
+// Catches errors passed to `next()` and returns a consistent error response
+app.use((err, _req, res, _next) => {
+  const status = err.status || 500;
+  const payload = { message: err.message || 'Internal Error' };
+  if (process.env.NODE_ENV !== 'production' && err.stack) {
+    payload.details = err.stack.split('\n')[0];
+  }
+  res.status(status).json(payload);
+});
+
+/**
+ * Start hook to initialize DB connection.
+ * Only `app.start()` should be called in `bin/www`.
+ */
+app.start = async () => {
+  // Avoid automatic DB connection in tests (app will be started in test.js)
+  if (process.env.NODE_ENV !== 'test') {
+    await connectDB();
+  }
+  return app;
+};
 
 module.exports = app;

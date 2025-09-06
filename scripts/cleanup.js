@@ -2,67 +2,102 @@
 
 /**
  * Cleanup script for the Cost Manager project.
- * Usage examples:
- *   node scripts/cleanup.js --id=123123 --first=mosh --last=israeli --birthday=1990-01-01 --yes
- *   node scripts/cleanup.js --dry                # preview only (no deletions)
+ * Keeps a single dummy user and removes everything else.
+ *
+ * Usage:
+ *   node scripts/cleanup.js --env=development --yes
+ *   node scripts/cleanup.js --env=development --dry
+ *   node scripts/cleanup.js --env=development --id=123123 --first=mosh --last=israeli --birthday=1990-01-01 --yes
+ *
+ * Notes:
+ * - Targets db by NODE_ENV → development:test:production mapping.
+ * - For your request, default env=development → db "costmanager_dev".
  */
 
-require('dotenv').config();
-
+const path = require('path');
 const mongoose = require('mongoose');
 
-// Require your existing models
-const User = require('../src/models/User');
-const Cost = require('../src/models/Cost');
-const Log = require('../src/models/Log');
-const Report = require('../src/models/Report');
+// Models (use app models to honor explicit collection names)
+const User = require('../src/models/user.model');
+const Cost = require('../src/models/cost.model');
+const Log = require('../src/models/log.model');
+const Report = require('../src/models/report.model');
+
+/* ---------- args ---------- */
 
 function parseArgs(argv) {
     const args = {};
     for (const part of argv.slice(2)) {
         if (part.startsWith('--')) {
-            const [k, v] = part.replace(/^--/, '').split('=');
+            const [k, v] = part.slice(2).split('=');
             args[k] = v === undefined ? true : v;
         }
     }
     return args;
 }
 
+const args = parseArgs(process.argv);
+const ENV = (args.env || process.env.NODE_ENV || 'development').trim();
+
+/* ---------- env loading ---------- */
+
+process.env.NODE_ENV = ENV;
+const envPath =
+    ENV === 'production' ? '.env.prod' :
+        ENV === 'test' ? '.env.test' :
+            '.env';
+
+require('dotenv').config({ path: path.resolve(process.cwd(), envPath) });
+
+/* ---------- db name by env ---------- */
+
+const DB_BY_ENV = {
+    development: 'costmanager_dev',
+    test: 'costmanager_test',
+    production: 'costmanager_prod',
+};
+
+function getDbName(env) {
+    return DB_BY_ENV[env] || DB_BY_ENV.development;
+}
+
+/* ---------- main ---------- */
+
 (async () => {
-    const args = parseArgs(process.argv);
-
-    const MONGODB_URI =
-        process.env.MONGODB_URI ||
-        process.env.TEST_MONGODB_URI;
-
+    const MONGODB_URI = process.env.MONGODB_URI;
     if (!MONGODB_URI) {
-        console.error('❌ Missing MONGODB_URI (or TEST_MONGODB_URI) in environment.');
+        console.error('❌ Missing MONGODB_URI in environment.');
         process.exit(1);
     }
 
-    const targetId = Number(args.id || 123123);
-    const first = args.first || 'mosh';
-    const last = args.last || 'israeli';
-    const birthdayStr = args.birthday || '1990-01-01';
-    const dryRun = !!args.dry;
-    const confirm = !!args.yes;
+    const dbName = getDbName(ENV); // default: costmanager_dev
+    const targetId = Number(args.id ?? 123123);
+    const first = String(args.first ?? 'mosh');
+    const last = String(args.last ?? 'israeli');
+    const birthdayStr = String(args.birthday ?? '1990-01-01');
+    const dryRun = Boolean(args.dry);
+    const confirm = Boolean(args.yes);
 
-    console.log('➡️  Connecting to MongoDB...');
-    await mongoose.connect(MONGODB_URI);
+    console.log(`➡️  Connecting to MongoDB (env=${ENV}, dbName=${dbName})...`);
+    await mongoose.connect(MONGODB_URI, {
+        dbName,
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 10_000,
+    });
     console.log('✅ Connected');
 
     try {
-        // Ensure the target user exists (upsert)
+        // Ensure the target user exists
         const existing = await User.findOne({ id: targetId }).lean();
         if (!existing) {
             if (dryRun) {
-                console.log(`DRY-RUN: would create user { id: ${targetId}, first_name: ${first}, last_name: ${last}, birthday: ${birthdayStr} }`);
+                console.log(`DRY-RUN: would create user { id:${targetId}, first_name:${first}, last_name:${last}, birthday:${birthdayStr} }`);
             } else {
                 await User.create({
                     id: targetId,
                     first_name: first,
                     last_name: last,
-                    birthday: new Date(birthdayStr)
+                    birthday: new Date(birthdayStr),
                 });
                 console.log(`👤 Created missing user id=${targetId}`);
             }
@@ -70,11 +105,11 @@ function parseArgs(argv) {
             console.log(`👤 User id=${targetId} already exists; will keep it.`);
         }
 
-        // Count what will be deleted
+        // Count planned deletions
         const otherUsersCount = await User.countDocuments({ id: { $ne: targetId } });
         const costsCount = await Cost.countDocuments({});
-        const logsCount = await Log.countDocuments({});
         const reportsCount = await Report.countDocuments({});
+        const logsCount = await Log.countDocuments({});
 
         console.log('\n📊 Planned deletions:');
         console.log(`- Other users: ${otherUsersCount}`);
@@ -105,7 +140,7 @@ function parseArgs(argv) {
         console.log(`- Reports removed: ${delReports.deletedCount}`);
         console.log(`- Logs removed: ${delLogs.deletedCount}`);
 
-        console.log('\n✅ Cleanup complete. Database now contains only the required test user.');
+        console.log('\n✅ Cleanup complete. Database now contains only the required user.');
     } catch (err) {
         console.error('❌ Cleanup failed:', err);
         process.exitCode = 1;
@@ -113,25 +148,3 @@ function parseArgs(argv) {
         await mongoose.connection.close();
     }
 })();
-
-/*
-how to run in console
-Preview (no changes):
-    node scripts/cleanup.js --dry
-Apply deletions (with defaults: keep user 123123 mosh israeli):
-    node scripts/cleanup.js --yes
-Apply with custom identity (if needed):
-    node scripts/cleanup.js --id=123123 --first=mosh --last=israeli --birthday=1990-01-01 --yes
-*/
-
-//npm run cleanup:dry
-//npm run cleanup
-
-/*
-How it works:
-Loads the MONGODB_URI from .env.
-Ensures the required user exists (creates if missing).
-Counts items to be removed; shows a summary.
-If --dry → stops there.
-If --yes → deletes all costs, reports, logs, and any users whose id !== targetId.
-*/

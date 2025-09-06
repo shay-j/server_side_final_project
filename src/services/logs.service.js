@@ -27,18 +27,15 @@ const logger = pino({
  * @param {Object} logData - The data to be logged.
  */
 async function writeLog(logData) {
-    // Log to MongoDB (persistent log)
-    const logEntry = new Log({
+    await new Log({
         method: logData.method,
-        url: logData.url,
-        statusCode: logData.statusCode,
-        responseTimeMs: logData.responseTimeMs,
+        path: logData.url,
+        status: logData.statusCode,
+        duration_ms: logData.responseTimeMs,
         endpoint: logData.endpoint,
         ip: logData.ip,
-        userAgent: logData.userAgent,
-    });
-
-    await logEntry.save();  // Save to MongoDB
+        user_agent: logData.userAgent
+    }).save();
 
     logger.info(logData);
 }

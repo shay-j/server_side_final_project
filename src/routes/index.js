@@ -67,6 +67,6 @@ router.get('/report', endpoint('reports.getMonthly'), validateReportQuery, async
 router.get('/users', endpoint('users.list'), asyncMw(usersCtrl.list));
 router.get('/users/:id', endpoint('users.getById'), validateUserIdParam, asyncMw(usersCtrl.getById));
 router.get('/logs', endpoint('logs.list'), asyncMw(logsCtrl.list));
-router.get('/about', endpoint('about'), asyncMw(aboutCtrl.about));
+router.get('/about', endpoint('about'), asyncMw(aboutCtrl.aboutController));
 
 module.exports = router;

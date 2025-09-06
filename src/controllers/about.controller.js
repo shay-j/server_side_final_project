@@ -18,4 +18,4 @@ async function aboutController(req, res) {
     res.json(TEAM.map(({ first_name, last_name }) => ({ first_name, last_name })));
 }
 
-module.exports = { about: aboutController };
+module.exports = { aboutController };

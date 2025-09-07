@@ -15,7 +15,6 @@ const Log = require('./models/log.model');
 const DB_BY_ENV = {
     development: 'costmanager_dev',
     test: 'costmanager_test',
-    production: 'costmanager_prod',
 };
 
 /** Resolve dbName by environment. */
@@ -57,4 +56,4 @@ async function connectDB() {
     console.log(`[mongo] connected to db="${name}" (env=${env})`);
 }
 
-module.exports = { connectDB, ensureIndexes, getDbName };
+module.exports = { connectDB, ensureIndexes };

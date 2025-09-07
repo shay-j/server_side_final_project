@@ -105,7 +105,7 @@ Health check: http://localhost:3000/health → `{ "ok": true }`
 irm http://localhost:3000/health
 
 # About (team)
-irm http://localhost:3000/api/aboutController
+irm http://localhost:3000/api/about
 
 # Add required user (id 123123)
 irm -Method Post -Uri http://localhost:3000/api/add -ContentType 'application/json' -Body '{ "id":123123, "first_name":"mosh", "last_name":"israeli", "birthday":"1990-01-01" }'

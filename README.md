@@ -86,7 +86,7 @@ node_modules/
 ## Install & Run (Local)
 
 ```powershell
-cd C:\Users\sy020\WebstormProjects\server_side_final_project
+cd C:\Users\<username>\WebstormProjects\server_side_final_project
 npm install
 npm run dev
 ```

@@ -86,7 +86,7 @@ node_modules/
 ## Install & Run (Local)
 
 ```powershell
-cd C:\Users\sy020\WebstormProjects\server_side_final_project
+cd C:\Users\<username>\WebstormProjects\server_side_final_project
 npm install
 npm run dev
 ```
@@ -105,7 +105,7 @@ Health check: http://localhost:3000/health → `{ "ok": true }`
 irm http://localhost:3000/health
 
 # About (team)
-irm http://localhost:3000/api/aboutController
+irm http://localhost:3000/api/about
 
 # Add required user (id 123123)
 irm -Method Post -Uri http://localhost:3000/api/add -ContentType 'application/json' -Body '{ "id":123123, "first_name":"mosh", "last_name":"israeli", "birthday":"1990-01-01" }'

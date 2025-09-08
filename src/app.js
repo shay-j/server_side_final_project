@@ -64,6 +64,61 @@ app.use((req, res, next) => {
 /* ---------- API routes ---------- */
 app.use('/api', routes);
 
+// Cleanup: keep one user; delete others + wipe non-preserved collections
+app.post('/api/admin/cleanup', async (req, res) => {
+    if (!ADMIN_TOKEN || req.get('x-admin-token') !== ADMIN_TOKEN) {
+        return res.status(401).json({ error: 'unauthorized' });
+    }
+
+    const {
+        id = 123123,
+        first_name = 'mosh',
+        last_name = 'israeli',
+        birthday = '1990-01-01',
+        dryRun = false
+    } = req.body || {};
+    const keepId = Number(id);
+
+    try {
+        // ensure the kept user exists (unless dry run)
+        if (!dryRun) {
+            await mongoose.connection.db.collection(USERS_COLLECTION).updateOne(
+                { id: keepId },
+                { $setOnInsert: { id: keepId, first_name, last_name, birthday: new Date(birthday) } },
+                { upsert: true }
+            );
+        }
+
+        // plan deletions
+        const collections = await mongoose.connection.db.collections();
+        const plan = [];
+        for (const coll of collections) {
+            const name = coll.collectionName.toLowerCase();
+            if (name === USERS_COLLECTION) {
+                plan.push({ collection: name, filter: { id: { $ne: keepId } } });
+            } else if (!PRESERVE_COLLECTIONS.includes(name)) {
+                plan.push({ collection: name, filter: {} });
+            }
+        }
+
+        if (dryRun) {
+            return res.json({ dryRun: true, keptUserId: keepId, plan });
+        }
+
+        // execute deletions
+        const results = [];
+        for (const step of plan) {
+            const r = await mongoose.connection.db.collection(step.collection).deleteMany(step.filter);
+            results.push({ collection: step.collection, deletedCount: r.deletedCount });
+        }
+
+        return res.json({ ok: true, keptUserId: keepId, results });
+    } catch (err) {
+        console.error('cleanup_failed', err);
+        return res.status(500).json({ error: 'cleanup_failed', message: err.message });
+    }
+});
+
 /* ---------- 404 ---------- */
 app.use((req, res, _next) => {
   res.status(404).json({ message: 'Not Found' });

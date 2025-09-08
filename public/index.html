@@ -1,395 +1,451 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AddController Manager • Admin Dashboard</title>
-  <style>
-    :root{
-      --bg:#0a0f1e; --card:#0f162c; --card2:#0c1326; --muted:#a9b3c9; --text:#e9edf6;
-      --border:rgba(255,255,255,.12); --line:rgba(255,255,255,.06);
-      --pri:#5eead4; --pri-2:#2dd4bf; --vio:#8b5cf6; --acc:#22d3ee;
-      --ok:#22c55e; --warn:#f59e0b; --err:#f43f5e; --code:#0b1226;
-      --chip:#111a33; --chip-b:#1a2442;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0; color:var(--text); font:15px/1.5 ui-sans-serif,system-ui,Segoe UI,Roboto,Ubuntu,Arial;
-      background:
-              radial-gradient(1200px 600px at 10% -10%, #172145 0%, transparent 60%),
-              radial-gradient(900px 500px at 90% 10%, #0e1d3f 0%, transparent 55%),
-              radial-gradient(900px 600px at 60% 100%, #0d2337 0%, transparent 60%),
-              var(--bg);
-    }
-    header{position:sticky;top:0;z-index:20;backdrop-filter:saturate(120%) blur(10px);
-      background:linear-gradient(180deg, rgba(10,15,30,.9), rgba(10,15,30,.35)); border-bottom:1px solid var(--border)}
-    .wrap{max-width:1200px;margin:0 auto;padding:22px}
-    .bar{display:flex;gap:16px;align-items:center;padding:12px 22px}
-    .logo{width:28px;height:28px;border-radius:10px;display:grid;place-items:center;
-      background:linear-gradient(135deg,var(--pri),var(--vio)); box-shadow:0 8px 28px rgba(94,234,212,.35)}
-    .brand{font-weight:700;letter-spacing:.3px;display:flex;align-items:center;gap:10px}
-    .sp{flex:1}
-    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid var(--border);background:rgba(255,255,255,.05)}
-    .chip{background:var(--chip); border:1px solid var(--border); padding:6px 10px; border-radius:999px; font-size:12px}
-    .mono{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-    .dot{width:10px;height:10px;border-radius:50%;}
-    .dot.idle{background:#6b7280}
-    .dot.work{background:var(--warn)}
-    .dot.ok{background:var(--ok)}
-    .dot.err{background:var(--err)}
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AddController Manager • Admin Dashboard</title>
+    <style>
+        :root{
+            --bg:#0a0f1e; --card:#0f162c; --card2:#0c1326; --muted:#a9b3c9; --text:#e9edf6;
+            --border:rgba(255,255,255,.12); --line:rgba(255,255,255,.06);
+            --pri:#5eead4; --pri-2:#2dd4bf; --vio:#8b5cf6; --acc:#22d3ee;
+            --ok:#22c55e; --warn:#f59e0b; --err:#f43f5e; --code:#0b1226;
+            --chip:#111a33; --chip-b:#1a2442;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{margin:0; color:var(--text); font:15px/1.5 ui-sans-serif,system-ui,Segoe UI,Roboto,Ubuntu,Arial;
+            background:
+                    radial-gradient(1200px 600px at 10% -10%, #172145 0%, transparent 60%),
+                    radial-gradient(900px 500px at 90% 10%, #0e1d3f 0%, transparent 55%),
+                    radial-gradient(900px 600px at 60% 100%, #0d2337 0%, transparent 60%),
+                    var(--bg);
+        }
+        header{position:sticky;top:0;z-index:20;backdrop-filter:saturate(120%) blur(10px);
+            background:linear-gradient(180deg, rgba(10,15,30,.9), rgba(10,15,30,.35)); border-bottom:1px solid var(--border)}
+        .wrap{max-width:1200px;margin:0 auto;padding:22px}
+        .bar{display:flex;gap:16px;align-items:center;padding:12px 22px}
+        .logo{width:28px;height:28px;border-radius:10px;display:grid;place-items:center;
+            background:linear-gradient(135deg,var(--pri),var(--vio)); box-shadow:0 8px 28px rgba(94,234,212,.35)}
+        .brand{font-weight:700;letter-spacing:.3px;display:flex;align-items:center;gap:10px}
+        .sp{flex:1}
+        .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid var(--border);background:rgba(255,255,255,.05)}
+        .chip{background:var(--chip); border:1px solid var(--border); padding:6px 10px; border-radius:999px; font-size:12px}
+        .mono{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+        .dot{width:10px;height:10px;border-radius:50%;}
+        .dot.idle{background:#6b7280}
+        .dot.work{background:var(--warn)}
+        .dot.ok{background:var(--ok)}
+        .dot.err{background:var(--err)}
 
-    .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
-    .col-4{grid-column:span 4}
-    .col-6{grid-column:span 6}
-    .col-8{grid-column:span 8}
-    .col-12{grid-column:span 12}
-    @media (max-width: 1024px){.col-4,.col-6,.col-8{grid-column:span 12}}
+        .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
+        .col-4{grid-column:span 4}
+        .col-6{grid-column:span 6}
+        .col-8{grid-column:span 8}
+        .col-12{grid-column:span 12}
+        @media (max-width: 1024px){.col-4,.col-6,.col-8{grid-column:span 12}}
 
-    .card{background:linear-gradient(180deg,var(--card),var(--card2)); border:1px solid var(--border);
-      border-radius:16px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.04)}
-    .card h3{margin:0 0 10px 0;font-size:18px}
-    .section-title{margin:10px 0 6px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
-    .hr{height:1px;background:var(--line);margin:10px 0}
+        .card{background:linear-gradient(180deg,var(--card),var(--card2)); border:1px solid var(--border);
+            border-radius:16px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.04)}
+        .card h3{margin:0 0 10px 0;font-size:18px}
+        .section-title{margin:10px 0 6px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
+        .hr{height:1px;background:var(--line);margin:10px 0}
 
-    label{display:block;font-size:12px;color:var(--muted);margin:8px 0 6px}
-    input,select,button{
-      appearance:none; outline:none; background:rgba(255,255,255,.06);
-      color:var(--text); border:1px solid var(--border); border-radius:10px;
-      padding:10px 12px; font-size:14px; width:100%; transition:.2s ease; backdrop-filter:blur(6px)
-    }
-    input:focus,select:focus{border-color:var(--pri); box-shadow:0 0 0 3px rgba(94,234,212,.15)}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+        label{display:block;font-size:12px;color:var(--muted);margin:8px 0 6px}
+        input,select,button{
+            appearance:none; outline:none; background:rgba(255,255,255,.06);
+            color:var(--text); border:1px solid var(--border); border-radius:10px;
+            padding:10px 12px; font-size:14px; width:100%; transition:.2s ease; backdrop-filter:blur(6px)
+        }
+        input:focus,select:focus{border-color:var(--pri); box-shadow:0 0 0 3px rgba(94,234,212,.15)}
+        .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 
-    .btn{cursor:pointer}
-    .btn.primary{background:linear-gradient(135deg,var(--pri),var(--vio)); border-color:transparent; font-weight:600; box-shadow:0 10px 24px rgba(139,92,246,.35)}
-    .btn.ghost{background:transparent}
-    .btn.outline{background:transparent;border:1px solid var(--pri);color:var(--pri)}
-    .btn.warn{border-color:var(--warn); color:var(--warn)}
-    .btn.danger{border-color:var(--err); color:var(--err)}
-    .btn:disabled{opacity:.5;cursor:not-allowed}
-    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+        .btn{cursor:pointer}
+        .btn.primary{background:linear-gradient(135deg,var(--pri),var(--vio)); border-color:transparent; font-weight:600; box-shadow:0 10px 24px rgba(139,92,246,.35)}
+        .btn.ghost{background:transparent}
+        .btn.outline{background:transparent;border:1px solid var(--pri);color:var(--pri)}
+        .btn.warn{border-color:var(--warn); color:var(--warn)}
+        .btn.danger{border-color:var(--err); color:var(--err)}
+        .btn:disabled{opacity:.5;cursor:not-allowed}
+        .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 
-    .panels{display:grid;gap:16px;grid-template-columns:1.2fr .8fr}
-    @media (max-width: 1024px){.panels{grid-template-columns:1fr}}
+        .panels{display:grid;gap:16px;grid-template-columns:1.2fr .8fr}
+        @media (max-width: 1024px){.panels{grid-template-columns:1fr}}
 
-    .pre{background:var(--code); border:1px solid var(--border); border-radius:12px; padding:12px;
-      font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; white-space:pre-wrap; word-break:break-word;
-      max-height:420px; overflow:auto}
-    .pre.error{border-color:var(--err); box-shadow:0 0 0 3px rgba(244,63,94,.15)}
+        .pre{background:var(--code); border:1px solid var(--border); border-radius:12px; padding:12px;
+            font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; white-space:pre-wrap; word-break:break-word;
+            max-height:420px; overflow:auto}
+        .pre.error{border-color:var(--err); box-shadow:0 0 0 3px rgba(244,63,94,.15)}
 
-    .tabs{display:flex;gap:6px;margin-bottom:10px}
-    .tab{padding:8px 12px;border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.05);cursor:pointer;font-size:13px}
-    .tab.active{border-color:var(--pri); box-shadow:0 0 0 3px rgba(94,234,212,.15)}
+        .tabs{display:flex;gap:6px;margin-bottom:10px}
+        .tab{padding:8px 12px;border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.05);cursor:pointer;font-size:13px}
+        .tab.active{border-color:var(--pri); box-shadow:0 0 0 3px rgba(94,234,212,.15)}
 
-    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
-    .chips{display:flex;gap:6px;flex-wrap:wrap}
-    .toast{position:fixed; right:18px; bottom:18px; background:rgba(16,24,48,.95); border:1px solid var(--border);
-      color:var(--text); padding:10px 12px; border-radius:10px; box-shadow:0 12px 30px rgba(0,0,0,.35); opacity:0; transform: translateY(10px); transition:.2s}
-    .toast.show{opacity:1; transform:none}
-  </style>
+        .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+        .chips{display:flex;gap:6px;flex-wrap:wrap}
+        .toast{position:fixed; right:18px; bottom:18px; background:rgba(16,24,48,.95); border:1px solid var(--border);
+            color:var(--text); padding:10px 12px; border-radius:10px; box-shadow:0 12px 30px rgba(0,0,0,.35); opacity:0; transform: translateY(10px); transition:.2s}
+        .toast.show{opacity:1; transform:none}
+    </style>
 </head>
 <body>
 <header>
-  <div class="bar">
-    <div class="logo" aria-hidden="true"></div>
-    <div class="brand">AddController Manager • Admin</div>
-    <div class="sp"></div>
-    <div class="mono chip" id="hostPortChip" title="Resolved host:port">—</div>
-    <span class="badge">Base URL</span>
-    <input id="baseUrl" class="mono" style="width:360px" placeholder="http://localhost:3000" />
-    <div class="badge"><span id="led" class="dot idle"></span><span id="statusBadge">idle</span></div>
-  </div>
+    <div class="bar">
+        <div class="logo" aria-hidden="true"></div>
+        <div class="brand">AddController Manager • Admin</div>
+        <div class="sp"></div>
+        <div class="mono chip" id="hostPortChip" title="Resolved host:port">—</div>
+        <span class="badge">Base URL</span>
+        <input id="baseUrl" class="mono" style="width:360px" placeholder="http://localhost:3000" />
+        <div class="badge"><span id="led" class="dot idle"></span><span id="statusBadge">idle</span></div>
+    </div>
 </header>
 
 <div class="wrap">
-  <div class="grid" style="margin-bottom:16px">
-    <div class="card col-6">
-      <h3>Add User</h3>
-      <div class="row">
-        <div>
-          <label>User ID</label>
-          <input id="u_id" type="number" placeholder="123123" />
+    <div class="grid" style="margin-bottom:16px">
+        <div class="card col-6">
+            <h3>Add User</h3>
+            <div class="row">
+                <div>
+                    <label>User ID</label>
+                    <input id="u_id" type="number" placeholder="123123" />
+                </div>
+                <div>
+                    <label>Birthday</label>
+                    <input id="u_bday" type="date" />
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label>First name</label>
+                    <input id="u_first" placeholder="Mosh" />
+                </div>
+                <div>
+                    <label>Last name</label>
+                    <input id="u_last" placeholder="Israeli" />
+                </div>
+            </div>
+            <div class="actions">
+                <button class="btn primary" id="btnAddUser">Create user</button>
+                <button class="btn ghost" id="btnUserSample">Fill sample</button>
+            </div>
         </div>
-        <div>
-          <label>Birthday</label>
-          <input id="u_bday" type="date" />
+
+        <div class="card col-6">
+            <h3>Add Cost</h3>
+            <div>
+                <label>Description</label>
+                <input id="c_desc" placeholder="Groceries" />
+            </div>
+            <div class="row3">
+                <div>
+                    <label>Category</label>
+                    <select id="c_cat">
+                        <option value="food">food</option>
+                        <option value="health">health</option>
+                        <option value="housing">housing</option>
+                        <option value="sports">sports</option>
+                        <option value="education">education</option>
+                    </select>
+                </div>
+                <div>
+                    <label>User ID</label>
+                    <input id="c_uid" type="number" placeholder="123123" />
+                </div>
+                <div>
+                    <label>Sum</label>
+                    <input id="c_sum" type="number" step="0.01" placeholder="87.90" />
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label>Created at (optional)</label>
+                    <input id="c_date" type="date" />
+                    <div class="chips" style="margin-top:6px">
+                        <span class="chip">Past months are blocked</span>
+                        <span class="chip">Empty = server time</span>
+                    </div>
+                </div>
+                <div></div>
+            </div>
+            <div class="actions">
+                <button class="btn primary" id="btnAddCost">Create cost</button>
+                <button class="btn ghost" id="btnCostSample">Fill sample</button>
+            </div>
         </div>
-      </div>
-      <div class="row">
-        <div>
-          <label>First name</label>
-          <input id="u_first" placeholder="Mosh" />
+
+        <div class="card col-8">
+            <h3>Monthly Report</h3>
+            <div class="row3">
+                <div>
+                    <label>User ID</label>
+                    <input id="r_uid" type="number" placeholder="123123" />
+                </div>
+                <div>
+                    <label>Month</label>
+                    <input id="r_month" type="month" />
+                </div>
+                <div>
+                    <label>&nbsp;</label>
+                    <button class="btn primary" id="btnReport">Get report</button>
+                </div>
+            </div>
+            <div class="toolbar" style="margin-top:10px">
+                <button class="btn outline" id="btnExportJson">Export response JSON</button>
+                <button class="btn outline" id="btnCopyReq">Copy request</button>
+                <button class="btn outline" id="btnCopyRes">Copy response</button>
+            </div>
         </div>
-        <div>
-          <label>Last name</label>
-          <input id="u_last" placeholder="Israeli" />
+
+        <div class="card col-4">
+            <h3>Quick Actions</h3>
+            <div class="actions">
+                <button class="btn" id="btnGetUser">Get user by ID</button>
+                <button class="btn" id="btnListUsers">List users</button>
+            </div>
+            <div class="actions" style="margin-top:4px">
+                <button class="btn" id="btnLogs">Show logs</button>
+                <button class="btn" id="btnAbout">About</button>
+                <button class="btn" id="btnHealth">Health</button>
+            </div>
+            <div class="hr"></div>
+            <label>Lookup user id</label>
+            <input id="lu_uid" type="number" placeholder="123123" />
         </div>
-      </div>
-      <div class="actions">
-        <button class="btn primary" id="btnAddUser">Create user</button>
-        <button class="btn ghost" id="btnUserSample">Fill sample</button>
-      </div>
     </div>
 
-    <div class="card col-6">
-      <h3>Add Cost</h3>
-      <div>
-        <label>Description</label>
-        <input id="c_desc" placeholder="Groceries" />
-      </div>
-      <div class="row3">
-        <div>
-          <label>Category</label>
-          <select id="c_cat">
-            <option value="food">food</option>
-            <option value="health">health</option>
-            <option value="housing">housing</option>
-            <option value="sports">sports</option>
-            <option value="education">education</option>
-          </select>
+    <div class="panels">
+        <div class="card">
+            <div class="tabs">
+                <div class="tab active" data-tab="req">Request JSON</div>
+                <div class="tab" data-tab="res">Response</div>
+            </div>
+            <pre id="req" class="pre">—</pre>
+            <pre id="res" class="pre" style="display:none">—</pre>
+            <div class="actions">
+                <button class="btn outline" id="clearPane">Clear pane</button>
+            </div>
         </div>
-        <div>
-          <label>User ID</label>
-          <input id="c_uid" type="number" placeholder="123123" />
-        </div>
-        <div>
-          <label>Sum</label>
-          <input id="c_sum" type="number" step="0.01" placeholder="87.90" />
-        </div>
-      </div>
-      <div class="row">
-        <div>
-          <label>Created at (optional)</label>
-          <input id="c_date" type="date" />
-          <div class="chips" style="margin-top:6px">
-            <span class="chip">Past months are blocked</span>
-            <span class="chip">Empty = server time</span>
-          </div>
-        </div>
-        <div></div>
-      </div>
-      <div class="actions">
-        <button class="btn primary" id="btnAddCost">Create cost</button>
-        <button class="btn ghost" id="btnCostSample">Fill sample</button>
-      </div>
-    </div>
+        <div class="card">
+            <h3 style="display:flex;align-items:center;gap:8px">Client Logs</h3>
+            <div class="row">
+                <div>
+                    <label>Filter (includes)</label>
+                    <input id="logFilter" placeholder="e.g. /api/report or 400" />
+                </div>
+                <div>
+                    <label>Controls</label>
+                    <div class="actions">
+                        <button class="btn warn" id="toggleAutoscroll">Autoscroll: on</button>
+                        <button class="btn danger" id="clearLogs">Clear logs</button>
+                    </div>
+                </div>
+            </div>
+            <pre id="logs" class="pre" style="height:360px"></pre>
 
-    <div class="card col-8">
-      <h3>Monthly Report</h3>
-      <div class="row3">
-        <div>
-          <label>User ID</label>
-          <input id="r_uid" type="number" placeholder="123123" />
+            <!-- ▼▼ Admin Cleanup (added under Client Logs) ▼▼ -->
+            <div class="hr"></div>
+            <h3 style="display:flex;align-items:center;gap:8px">Admin Cleanup</h3>
+            <div class="row">
+                <div>
+                    <label>Admin token</label>
+                    <input id="adm_token" type="password" placeholder="Set ADMIN_TOKEN in your .env" />
+                </div>
+                <div>
+                    <label>Keep User ID</label>
+                    <input id="adm_keep" type="number" value="123123" />
+                </div>
+            </div>
+            <div class="actions">
+                <button class="btn outline" id="btnCleanupDry">Dry run</button>
+                <button class="btn danger" id="btnCleanupApply">Cleanup (Danger)</button>
+            </div>
+            <pre id="cleanupOut" class="pre" style="height:200px"></pre>
+            <!-- ▲▲ Admin Cleanup ▲▲ -->
         </div>
-        <div>
-          <label>Month</label>
-          <input id="r_month" type="month" />
-        </div>
-        <div>
-          <label>&nbsp;</label>
-          <button class="btn primary" id="btnReport">Get report</button>
-        </div>
-      </div>
-      <div class="toolbar" style="margin-top:10px">
-        <button class="btn outline" id="btnExportJson">Export response JSON</button>
-        <button class="btn outline" id="btnCopyReq">Copy request</button>
-        <button class="btn outline" id="btnCopyRes">Copy response</button>
-      </div>
     </div>
-
-    <div class="card col-4">
-      <h3>Quick Actions</h3>
-      <div class="actions">
-        <button class="btn" id="btnGetUser">Get user by ID</button>
-        <button class="btn" id="btnListUsers">List users</button>
-      </div>
-      <div class="actions" style="margin-top:4px">
-        <button class="btn" id="btnLogs">Show logs</button>
-        <button class="btn" id="btnAbout">About</button>
-        <button class="btn" id="btnHealth">Health</button>
-      </div>
-      <div class="hr"></div>
-      <label>Lookup user id</label>
-      <input id="lu_uid" type="number" placeholder="123123" />
-    </div>
-  </div>
-
-  <div class="panels">
-    <div class="card">
-      <div class="tabs">
-        <div class="tab active" data-tab="req">Request JSON</div>
-        <div class="tab" data-tab="res">Response</div>
-      </div>
-      <pre id="req" class="pre">—</pre>
-      <pre id="res" class="pre" style="display:none">—</pre>
-      <div class="actions">
-        <button class="btn outline" id="clearPane">Clear pane</button>
-      </div>
-    </div>
-    <div class="card">
-      <h3 style="display:flex;align-items:center;gap:8px">Client Logs</h3>
-      <div class="row">
-        <div>
-          <label>Filter (includes)</label>
-          <input id="logFilter" placeholder="e.g. /api/report or 400" />
-        </div>
-        <div>
-          <label>Controls</label>
-          <div class="actions">
-            <button class="btn warn" id="toggleAutoscroll">Autoscroll: on</button>
-            <button class="btn danger" id="clearLogs">Clear logs</button>
-          </div>
-        </div>
-      </div>
-      <pre id="logs" class="pre" style="height:360px"></pre>
-    </div>
-  </div>
 </div>
 
 <div id="toast" class="toast">Copied</div>
 
 <script>
-  // ===== DOM =====
-  const $ = s => document.querySelector(s);
-  const reqPre = $('#req'), resPre = $('#res'), logsEl = $('#logs'), toast = $('#toast');
-  const baseInput = $('#baseUrl'), statusBadge = $('#statusBadge'), led = $('#led'), hostPortChip = $('#hostPortChip');
+    // ===== DOM =====
+    const $ = s => document.querySelector(s);
+    const reqPre = $('#req'), resPre = $('#res'), logsEl = $('#logs'), toast = $('#toast');
+    const baseInput = $('#baseUrl'), statusBadge = $('#statusBadge'), led = $('#led'), hostPortChip = $('#hostPortChip');
 
-  // ===== State =====
-  const DEFAULT_BASE = location.origin.replace(/\/$/, '');
-  let autoscroll = true;
-  let logs = [];
-  let busyCount = 0;
+    // ===== State =====
+    const DEFAULT_BASE = location.origin.replace(/\/$/, '');
+    let autoscroll = true;
+    let logs = [];
+    let busyCount = 0;
 
-  // ===== Tabs =====
-  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-    t.classList.add('active');
-    const name = t.dataset.tab;
-    reqPre.style.display = name==='req' ? 'block':'none';
-    resPre.style.display = name==='res' ? 'block':'none';
-  }));
+    // ===== Tabs =====
+    document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        const name = t.dataset.tab;
+        reqPre.style.display = name==='req' ? 'block':'none';
+        resPre.style.display = name==='res' ? 'block':'none';
+    }));
 
-  // ===== Toast + panes =====
-  function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1100); }
-  function setReq(obj){ reqPre.classList.remove('error'); reqPre.textContent = typeof obj==='string'? obj: JSON.stringify(obj,null,2); }
-  function setRes(obj,isError){ resPre.classList.toggle('error',!!isError); resPre.textContent = typeof obj==='string'? obj: JSON.stringify(obj,null,2); }
+    // ===== Toast + panes =====
+    function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1100); }
+    function setReq(obj){ reqPre.classList.remove('error'); reqPre.textContent = typeof obj==='string'? obj: JSON.stringify(obj,null,2); }
+    function setRes(obj,isError){ resPre.classList.toggle('error',!!isError); resPre.textContent = typeof obj==='string'? obj: JSON.stringify(obj,null,2); }
 
-  // ===== Status LED =====
-  function setBusy(b){ busyCount += b?1:-1; if(busyCount<0) busyCount=0; const working = busyCount>0; statusBadge.textContent = working?'working…':'idle'; led.className='dot '+(working?'work':'idle'); }
-  function setOK(){ statusBadge.textContent='online'; led.className='dot ok'; }
-  function setERR(){ statusBadge.textContent='error'; led.className='dot err'; }
+    // ===== Status LED =====
+    function setBusy(b){ busyCount += b?1:-1; if(busyCount<0) busyCount=0; const working = busyCount>0; statusBadge.textContent = working?'working…':'idle'; led.className='dot '+(working?'work':'idle'); }
+    function setOK(){ statusBadge.textContent='online'; led.className='dot ok'; }
+    function setERR(){ statusBadge.textContent='error'; led.className='dot err'; }
 
-  // ===== Base URL =====
-  function parseHostPort(u){
-    try{ const url=new URL(u); const port=url.port||(url.protocol==='https:'?'443':'80'); return `${url.hostname}:${port}`; }
-    catch{ return '—'; }
-  }
-  function getBase(){ const v = baseInput?.value?.trim?.() ?? ''; return v? v.replace(/\/$/,''): DEFAULT_BASE; }
-  function saveBase(v){ localStorage.setItem('cm_base',v); hostPortChip && (hostPortChip.textContent = parseHostPort(v)); }
-  (function initBase(){
-    const saved = (localStorage.getItem('cm_base')||'').trim();
-    const use = saved || DEFAULT_BASE;
-    if (baseInput) baseInput.value = use;
-    saveBase(use);
-  })();
-  let baseTimer=null;
-  baseInput && baseInput.addEventListener('input', ()=>{
-    clearTimeout(baseTimer);
-    baseTimer = setTimeout(()=>{
-      const v = (baseInput.value||'').trim().replace(/\/$/,'') || DEFAULT_BASE;
-      try{ new URL(v); saveBase(v);}catch{ hostPortChip && (hostPortChip.textContent='—'); }
-    },250);
-  });
+    // ===== Base URL =====
+    function parseHostPort(u){
+        try{ const url=new URL(u); const port=url.port||(url.protocol==='https:'?'443':'80'); return `${url.hostname}:${port}`; }
+        catch{ return '—'; }
+    }
+    function getBase(){ const v = baseInput?.value?.trim?.() ?? ''; return v? v.replace(/\/$/,''): DEFAULT_BASE; }
+    function saveBase(v){ localStorage.setItem('cm_base',v); hostPortChip && (hostPortChip.textContent = parseHostPort(v)); }
+    (function initBase(){
+        const saved = (localStorage.getItem('cm_base')||'').trim();
+        const use = saved || DEFAULT_BASE;
+        if (baseInput) baseInput.value = use;
+        saveBase(use);
+    })();
+    let baseTimer=null;
+    baseInput && baseInput.addEventListener('input', ()=>{
+        clearTimeout(baseTimer);
+        baseTimer = setTimeout(()=>{
+            const v = (baseInput.value||'').trim().replace(/\/$/,'') || DEFAULT_BASE;
+            try{ new URL(v); saveBase(v);}catch{ hostPortChip && (hostPortChip.textContent='—'); }
+        },250);
+    });
 
-  // ===== Logs + filter =====
-  function renderLogs(){
-    const f = ($('#logFilter')?.value||'').trim().toLowerCase();
-    const view = f? logs.filter(x=>x.line.toLowerCase().includes(f)) : logs;
-    logsEl && (logsEl.textContent = view.map(x=>x.line).join('\n'));
-    if(autoscroll && logsEl) logsEl.scrollTop = logsEl.scrollHeight;
-  }
-  function log(line){ const t=new Date().toISOString(); logs.push({ts:Date.now(), line:`[${t}] ${line}`}); renderLogs(); }
-  $('#toggleAutoscroll')?.addEventListener('click', ()=>{ autoscroll=!autoscroll; const b=$('#toggleAutoscroll'); if(b) b.textContent=`Autoscroll: ${autoscroll?'on':'off'}`; });
-  $('#clearLogs')?.addEventListener('click', ()=>{ logs=[]; renderLogs(); });
-  $('#logFilter')?.addEventListener('input', renderLogs);
+    // ===== Logs + filter =====
+    function renderLogs(){
+        const f = ($('#logFilter')?.value||'').trim().toLowerCase();
+        const view = f? logs.filter(x=>x.line.toLowerCase().includes(f)) : logs;
+        logsEl && (logsEl.textContent = view.map(x=>x.line).join('\n'));
+        if(autoscroll && logsEl) logsEl.scrollTop = logsEl.scrollHeight;
+    }
+    function log(line){ const t=new Date().toISOString(); logs.push({ts:Date.now(), line:`[${t}] ${line}`}); renderLogs(); }
+    $('#toggleAutoscroll')?.addEventListener('click', ()=>{ autoscroll=!autoscroll; const b=$('#toggleAutoscroll'); if(b) b.textContent=`Autoscroll: ${autoscroll?'on':'off'}`; });
+    $('#clearLogs')?.addEventListener('click', ()=>{ logs=[]; renderLogs(); });
+    $('#logFilter')?.addEventListener('input', renderLogs);
 
-  // ===== HTTP =====
-  async function send(method,path,body){
-    const base = getBase();
-    const url = base + path;
-    setBusy(true);
-    setReq(body? {method,url,body}: `${method} ${url}`);
-    log(`${method} ${url}`);
-    try{
-      const r = await fetch(url, { method, headers: body? {'Content-Type':'application/json'}: undefined, body: body? JSON.stringify(body): undefined });
-      const text = await r.text(); let data; try{ data=JSON.parse(text);}catch{ data=text; }
-      const isErr = r.status >= 400;
-      setRes({status:r.status, data}, isErr);
-      log(`→ ${r.status}`);
-      if(!isErr) setOK(); else setERR();
-      return {status:r.status,data};
-    }catch(err){
-      setRes({error:String(err)}, true); log(`ERROR ${err}`); setERR(); throw err;
-    }finally{ setBusy(false); }
-  }
+    // ===== HTTP =====
+    async function send(method,path,body){
+        const base = getBase();
+        const url = base + path;
+        setBusy(true);
+        setReq(body? {method,url,body}: `${method} ${url}`);
+        log(`${method} ${url}`);
+        try{
+            const r = await fetch(url, { method, headers: body? {'Content-Type':'application/json'}: undefined, body: body? JSON.stringify(body): undefined });
+            const text = await r.text(); let data; try{ data=JSON.parse(text);}catch{ data=text; }
+            const isErr = r.status >= 400;
+            setRes({status:r.status, data}, isErr);
+            log(`→ ${r.status}`);
+            if(!isErr) setOK(); else setERR();
+            return {status:r.status,data};
+        }catch(err){
+            setRes({error:String(err)}, true); log(`ERROR ${err}`); setERR(); throw err;
+        }finally{ setBusy(false); }
+    }
 
-  // ===== Users =====
-  $('#btnUserSample')?.addEventListener('click', ()=>{
-    $('#u_id').value=123123; $('#u_first').value='Mosh'; $('#u_last').value='Israeli'; $('#u_bday').value='1998-05-10';
-  });
-  $('#btnAddUser')?.addEventListener('click', async ()=>{
-    const body={ id:Number($('#u_id').value), first_name:$('#u_first').value.trim(), last_name:$('#u_last').value.trim(), birthday:$('#u_bday').value };
-    await send('POST','/api/add', body);
-  });
+    // ===== Users =====
+    $('#btnUserSample')?.addEventListener('click', ()=>{
+        $('#u_id').value=123123; $('#u_first').value='Mosh'; $('#u_last').value='Israeli'; $('#u_bday').value='1998-05-10';
+    });
+    $('#btnAddUser')?.addEventListener('click', async ()=>{
+        const body={ id:Number($('#u_id').value), first_name:$('#u_first').value.trim(), last_name:$('#u_last').value.trim(), birthday:$('#u_bday').value };
+        await send('POST','/api/add', body);
+    });
 
-  // ===== Costs =====
-  $('#btnCostSample')?.addEventListener('click', ()=>{
-    $('#c_desc').value='Groceries'; $('#c_cat').value='food'; $('#c_uid').value=123123; $('#c_sum').value=87.9; $('#c_date').value='';
-  });
-  $('#btnAddCost')?.addEventListener('click', async ()=>{
-    const body={ description:$('#c_desc').value.trim(), category:$('#c_cat').value, userid:Number($('#c_uid').value), sum:Number($('#c_sum').value) };
-    const d=$('#c_date').value; if(d) body.created_at=d;
-    await send('POST','/api/add', body);
-  });
+    // ===== Costs =====
+    $('#btnCostSample')?.addEventListener('click', ()=>{
+        $('#c_desc').value='Groceries'; $('#c_cat').value='food'; $('#c_uid').value=123123; $('#c_sum').value=87.9; $('#c_date').value='';
+    });
+    $('#btnAddCost')?.addEventListener('click', async ()=>{
+        const body={ description:$('#c_desc').value.trim(), category:$('#c_cat').value, userid:Number($('#c_uid').value), sum:Number($('#c_sum').value) };
+        const d=$('#c_date').value; if(d) body.created_at=d;
+        await send('POST','/api/add', body);
+    });
 
-  // ===== Report =====
-  $('#btnReport')?.addEventListener('click', async ()=>{
-    const uid=Number($('#r_uid').value); const ym=$('#r_month').value; if(!ym){ showToast('Pick month'); return; }
-    const [y,m]=ym.split('-'); const q=`?id=${encodeURIComponent(uid)}&year=${encodeURIComponent(y)}&month=${encodeURIComponent(Number(m))}`;
-    await send('GET', `/api/report${q}`);
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-    document.querySelector('.tab[data-tab="res"]')?.classList.add('active');
-    reqPre.style.display='none'; resPre.style.display='block';
-  });
+    // ===== Report =====
+    $('#btnReport')?.addEventListener('click', async ()=>{
+        const uid=Number($('#r_uid').value); const ym=$('#r_month').value; if(!ym){ showToast('Pick month'); return; }
+        const [y,m]=ym.split('-'); const q=`?id=${encodeURIComponent(uid)}&year=${encodeURIComponent(y)}&month=${encodeURIComponent(Number(m))}`;
+        await send('GET', `/api/report${q}`);
+        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+        document.querySelector('.tab[data-tab="res"]')?.classList.add('active');
+        reqPre.style.display='none'; resPre.style.display='block';
+    });
 
-  // ===== Quick actions =====
-  $('#btnGetUser')?.addEventListener('click', async ()=>{
-    const uid=Number($('#lu_uid').value); await send('GET', `/api/users/${encodeURIComponent(uid)}`);
-  });
-  $('#btnListUsers')?.addEventListener('click', async ()=>{ await send('GET','/api/users'); });
-  $('#btnLogs')?.addEventListener('click', async ()=>{ await send('GET','/api/logs'); });
-  $('#btnAbout')?.addEventListener('click', async ()=>{ await send('GET','/api/about'); });
-  $('#btnHealth')?.addEventListener('click', async ()=>{ await send('GET','/health'); });
+    // ===== Quick actions =====
+    $('#btnGetUser')?.addEventListener('click', async ()=>{
+        const uid=Number($('#lu_uid').value); await send('GET', `/api/users/${encodeURIComponent(uid)}`);
+    });
+    $('#btnListUsers')?.addEventListener('click', async ()=>{ await send('GET','/api/users'); });
+    $('#btnLogs')?.addEventListener('click', async ()=>{ await send('GET','/api/logs'); });
+    $('#btnAbout')?.addEventListener('click', async ()=>{ await send('GET','/api/about'); });
+    $('#btnHealth')?.addEventListener('click', async ()=>{ await send('GET','/health'); });
 
-  // ===== Pane tools =====
-  $('#clearPane')?.addEventListener('click', ()=>{ reqPre.textContent='—'; resPre.textContent='—'; resPre.classList.remove('error'); });
-  $('#btnCopyReq')?.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(reqPre.textContent); showToast('Request copied'); }catch{ showToast('Copy failed'); }});
-  $('#btnCopyRes')?.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(resPre.textContent); showToast('Response copied'); }catch{ showToast('Copy failed'); }});
-  $('#btnExportJson')?.addEventListener('click', ()=>{
-    try{
-      const active=resPre.textContent.trim(); if(!active||active==='—'){ showToast('No response'); return; }
-      const blob=new Blob([active],{type:'application/json'}); const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob); a.download=`response-${Date.now()}.json`; a.click(); URL.revokeObjectURL(a.href);
-    }catch{ showToast('Export failed'); }
-  });
+    // ===== Admin Cleanup (direct fetch with header) =====
+    async function adminCleanup(dry){
+        const base = getBase();
+        const url = base + '/api/admin/cleanup';
+        const token = ($('#adm_token')?.value || '').trim();
+        const keep = Number($('#adm_keep')?.value || 123123);
+        if(!token){ showToast('Enter admin token'); return; }
 
-  // ===== Init =====
-  (function init(){
-    log('Dashboard ready. Base URL auto-detected from current origin. You can override it above.');
-    led.className='dot idle';
-    hostPortChip && (hostPortChip.title='Resolved host:port');
-  })();
+        const body = { id: keep, dryRun: !!dry };
+
+        setBusy(true);
+        setReq({ method: 'POST', url, body: { ...body, _headers: { 'x-admin-token': '***' } }});
+        log(`POST ${url} (cleanup${dry? ' dry':''})`);
+
+        try{
+            const r = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type':'application/json', 'x-admin-token': token },
+                body: JSON.stringify(body)
+            });
+            const text = await r.text(); let data; try{ data=JSON.parse(text);}catch{ data=text; }
+            const isErr = r.status >= 400;
+            setRes({status:r.status, data}, isErr);
+            $('#cleanupOut').textContent = JSON.stringify({ status:r.status, body:data }, null, 2);
+            log(`→ ${r.status}`);
+            if(!isErr) setOK(); else setERR();
+        }catch(err){
+            setRes({error:String(err)}, true); log(`ERROR ${err}`); setERR();
+            $('#cleanupOut').textContent = String(err);
+        }finally{
+            setBusy(false);
+        }
+    }
+    $('#btnCleanupDry')?.addEventListener('click', ()=>adminCleanup(true));
+    $('#btnCleanupApply')?.addEventListener('click', ()=>adminCleanup(false));
+
+    // ===== Pane tools =====
+    $('#clearPane')?.addEventListener('click', ()=>{ reqPre.textContent='—'; resPre.textContent='—'; resPre.classList.remove('error'); });
+    $('#btnCopyReq')?.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(reqPre.textContent); showToast('Request copied'); }catch{ showToast('Copy failed'); }});
+    $('#btnCopyRes')?.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(resPre.textContent); showToast('Response copied'); }catch{ showToast('Copy failed'); }});
+    $('#btnExportJson')?.addEventListener('click', ()=>{
+        try{
+            const active=resPre.textContent.trim(); if(!active||active==='—'){ showToast('No response'); return; }
+            const blob=new Blob([active],{type:'application/json'}); const a=document.createElement('a');
+            a.href=URL.createObjectURL(blob); a.download=`response-${Date.now()}.json`; a.click(); URL.revokeObjectURL(a.href);
+        }catch{ showToast('Export failed'); }
+    });
+
+    // ===== Init =====
+    (function init(){
+        log('Dashboard ready. Base URL auto-detected from current origin. You can override it above.');
+        led.className='dot idle';
+        hostPortChip && (hostPortChip.title='Resolved host:port');
+    })();
 </script>
 </body>
 </html>

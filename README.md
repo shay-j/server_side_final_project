@@ -122,14 +122,11 @@ irm -Method Post -Uri http://localhost:3000/api/add -ContentType 'application/js
 # Add cost with future date (valid)
 irm -Method Post -Uri http://localhost:3000/api/add -ContentType 'application/json' -Body '{ "userid":123123, "description":"book", "category":"education", "sum":50, "date":"2025-09-10T00:00:00Z" }'
 
-# Invalid past date (expect 400)
-irm -Method Post -Uri http://localhost:3000/api/add -ContentType 'application/json' -Body '{ "userid":123123, "description":"old ticket", "category":"sports", "sum":20, "date":"2023-01-01T00:00:00Z" }'
-
 # Invalid category (expect 400)
 irm -Method Post -Uri http://localhost:3000/api/add -ContentType 'application/json' -Body '{ "userid":123123, "description":"plane", "category":"travel", "sum":200 }'
 
 # Monthly report (current month)
-irm 'http://localhost:3000/api/report?id=123123&year=2025&month=8'
+irm 'http://localhost:3000/api/report?id=123123&year=2025&month=9' | ConvertTo-Json -Depth 10
 
 # Request logs
 irm http://localhost:3000/api/logs

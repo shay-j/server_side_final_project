@@ -4,23 +4,18 @@
  * Reports Service [Service Pattern + Computed + Cache]
  * - Computes month-by-year cost reports per user for ANY month.
  * - Current month -> live computation (no cache write).
- * - Past/future months -> compute once and cache (materialized view).
- * - Output JSON matches the project spec:
+ * - Other months -> compute once and cache (materialized view).
+ * - Output shape:
  *   {
- *     "userid": 123123,
- *     "year": 2025,
- *     "month": 11,
- *     "costs": [
- *       { "food": [ { "sum":12, "description":"...", "day":17 }, ... ] },
- *       { "education": [ ... ] },
- *       ...
- *     ]
+ *     userid, year, month,
+ *     costs: [ { "<category>": [ { sum, description, day }, ... ] }, ... ]
  *   }
  * ------------------------------------------------------------------ */
 
 const Report = require('../models/Report');
 const Cost = require('../models/Cost');
 const { endOfMonth } = require('../utils/dates');
+const { CATEGORIES } = require('../utils/constants'); // <-- use canonical categories
 
 /* Determine if (year, month) is the current period */
 function isCurrentPeriod(year, month) {
@@ -30,24 +25,25 @@ function isCurrentPeriod(year, month) {
 
 /* ------------------------------------------------------------------
  * computeMonthly
- * - Builds the JSON shape required by the spec.
- * - Groups by category and emits items with {sum, description, day}.
- * - Ensures categories with no items appear with [] when known.
+ * - Groups by category and emits items { sum, description, day }.
+ * - Ensures ALL known categories appear; empty ones use [].
+ * - Items are sorted by created_at ascending (stable output).
  * ------------------------------------------------------------------ */
 async function computeMonthly(userid, year, month) {
     const from = new Date(year, month - 1, 1, 0, 0, 0, 0);
     const to = endOfMonth(from);
 
-    // Group items of the requested month by category and map day-of-month
+    // Aggregate all costs of the requested month for the specific user
     const grouped = await Cost.aggregate([
-        { $match: { userid, created_at: { $gte: from, $lte: to } } },
+        { $match: { userid: Number(userid), created_at: { $gte: from, $lte: to } } },
+        { $sort: { created_at: 1, _id: 1 } }, // stable order inside each category
         {
             $project: {
                 _id: 0,
-                category: '$category',
+                category: { $toLower: '$category' }, // normalize to lower-case
                 sum: '$sum',
                 description: '$description',
-                day: { $dayOfMonth: '$created_at' }
+                day: { $dayOfMonth: '$created_at' },
             }
         },
         {
@@ -56,55 +52,52 @@ async function computeMonthly(userid, year, month) {
                 items: { $push: { sum: '$sum', description: '$description', day: '$day' } }
             }
         },
-        { $project: { _id: 0, category: '$_id', items: 1 } },
-        { $sort: { category: 1 } }
+        { $project: { _id: 0, category: '$_id', items: 1 } }
     ]);
 
-    // Ensure empty categories appear as [] as per example
-    // Use all known categories from the dataset for completeness
-    const allCategories = await Cost.distinct('category');
-    const known = new Set(allCategories.map(String));
-    const map = new Map(grouped.map(g => [String(g.category), g.items]));
+    // Map aggregated categories to quick lookup
+    const byCategory = new Map(grouped.map(g => [String(g.category), g.items]));
 
-    // Build "costs" array as [{ "<category>": [ ... ] }, ...] sorted by category name
-    const categoriesSorted = Array.from(known).sort((a, b) => a.localeCompare(b));
+    // Build costs array from canonical category list (ensures empties)
+    const categoriesSorted = [...CATEGORIES].map(String).map(c => c.toLowerCase()).sort((a, b) => a.localeCompare(b));
     const costs = categoriesSorted.map(cat => {
-        const arr = map.get(cat) || [];
+        const arr = byCategory.get(cat) || [];
         return { [cat]: arr };
     });
 
-    return { userid, year, month, costs };
+    return { userid: Number(userid), year: Number(year), month: Number(month), costs };
 }
 
 /* ------------------------------------------------------------------
  * getCachedOrCompute
- * - Current month: compute live.
+ * - Current month: compute live (do NOT write cache).
  * - Otherwise: read from cache; if missing, compute and materialize.
  * ------------------------------------------------------------------ */
 async function getCachedOrCompute(userid, year, month) {
-    if (isCurrentPeriod(year, month)) {
+    if (isCurrentPeriod(Number(year), Number(month))) {
         const data = await computeMonthly(userid, year, month);
-        return { data };
+        return { source: 'live', data };
     }
 
     // Try reading from cache
     const cached = await Report.findOne(
-        { userid, year, month },
+        { userid: Number(userid), year: Number(year), month: Number(month) },
         { _id: 0, data: 1 }
     ).lean();
 
     if (cached && cached.data) {
-        return { data: cached.data };
+        return { source: 'cache', data: cached.data };
     }
 
     // Compute and materialize
     const data = await computeMonthly(userid, year, month);
     await Report.updateOne(
-        { userid, year, month },
+        { userid: Number(userid), year: Number(year), month: Number(month) },
         { $set: { data, generated_at: new Date() } },
         { upsert: true, runValidators: true }
     );
-    return { data };
+
+    return { source: 'computed', data };
 }
 
 module.exports = { getCachedOrCompute };

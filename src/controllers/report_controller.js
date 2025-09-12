@@ -1,29 +1,30 @@
+// src/controllers/report_controller.js
 const { getCachedOrCompute } = require('../services/reports_service');
-const { notFound, ok } = require('../utils/responses');
+const { notFound } = require('../utils/responses');
 const { exists: userExists } = require('../services/users_service');
 
-/**
+/*
  * Controller for handling `GET /api/report` requests.
- * Returns the report data for a specific user and month.
  *
- * Design Pattern: Uses **Computed Materialization** pattern.
- * - For the current month, the data is computed live.
- * - For past months, it first checks for a cached report. If not found, it computes and stores the result.
- *
- * @param {Request} req - Express request object.
- * @param {Response} res - Express response object.
+ * Design Pattern: Computed Materialization
+ * - Current month: compute live
+ * - Other months: read from cache, or compute+materialize
  */
 const getMonthly = async (req, res) => {
-    const { id, year, month } = req.query;
+    const idNum = Number(req.query.id);
+    const yearNum = Number(req.query.year);
+    const monthNum = Number(req.query.month);
 
     // Validate user existence
-    if (!(await userExists(id))) return notFound(res, 'user not found');
+    if (!(await userExists(idNum))) {
+        return notFound(res, 'user not found');
+    }
 
     // Fetch or compute the report
-    const result = await getCachedOrCompute(id, Number(year), Number(month));
+    const result = await getCachedOrCompute(idNum, yearNum, monthNum);
 
-    // Return the result
-    return ok(res, result);
+    // Return only the report payload, not wrapped twice
+    return res.status(200).json(result.data);
 };
 
 module.exports = { getMonthly };

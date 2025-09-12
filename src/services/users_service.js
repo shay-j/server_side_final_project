@@ -98,8 +98,8 @@ async function assertExists(userid) {
 /* ------------------------------------------------------------------
  * getByIdWithTotal
  * ------------------------------------------------------------------
- * Returns user document enriched with totals aggregated from costs.
- * If no costs exist, totals default to { total_sum:0, count:0 }.
+ * Returns user document enriched with the total sum of all costs.
+ * Output shape: { ...userFields, total: <number> }
  * ------------------------------------------------------------------ */
 async function getByIdWithTotal(userid) {
     const user = await User.findOne({ id: userid }, { _id: 0 }).lean();
@@ -107,11 +107,12 @@ async function getByIdWithTotal(userid) {
 
     const agg = await Cost.aggregate([
         { $match: { userid } },
-        { $group: { _id: null, total_sum: { $sum: '$sum' }, count: { $sum: 1 } } },
-        { $project: { _id: 0, total_sum: 1, count: 1 } }
+        { $group: { _id: null, total: { $sum: '$sum' } } },
+        { $project: { _id: 0, total: 1 } }
     ]);
 
-    return { ...user, totals: agg[0] || { total_sum: 0, count: 0 } };
+    const total = (agg[0] && typeof agg[0].total === 'number') ? agg[0].total : 0;
+    return { ...user, total };
 }
 
 module.exports = { create, list, exists, assertExists, getByIdWithTotal };

@@ -41,7 +41,7 @@ bin/www               # server bootstrap (listens after Mongo connects)
 app.js                # Express app, middleware, routes mount
 src/
   controllers/        # cost, user, report, about, logs
-  middleware/         # validate, errorHandler, requestLogger
+  middleware/         # validate, errorHandler, request_logger
   models/             # User, AddController, LogController, Report
   utils/              # constants, date utils, report builder
   db.js               # mongoose connection

@@ -1,6 +1,6 @@
 'use strict';
 
-/**
+/*
  * Express app bootstrap.
  * - Loads env by NODE_ENV (.env | .env.test)
  * - Sets pino-http, parsers, static dashboard
@@ -17,10 +17,10 @@ const express = require('express');
 const path = require('path');
 const pinoHttp = require('pino-http')();
 const { connectDB } = require('./db');
-const { writeLog } = require('./services/logs.service');
+const { writeLog } = require('./services/logs_service');
 const routes = require('./routes');
 
-// 👇 missing import + admin constants (were causing ReferenceError)
+/* Missing import + admin constants (were causing ReferenceError) */
 const mongoose = require('mongoose');
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
 const USERS_COLLECTION = (process.env.USERS_COLLECTION || 'users').toLowerCase();
@@ -74,7 +74,7 @@ app.use((req, res, next) => {
 app.use('/api', routes);
 
 /* ---------- Admin cleanup route (fixed) ---------- */
-/**
+/*
  * POST /api/admin/cleanup
  * Header: x-admin-token: <ADMIN_TOKEN>
  * Body: { id?: number, first_name?: string, last_name?: string, birthday?: ISO, dryRun?: boolean }

@@ -1,6 +1,6 @@
 'use strict';
 
-/**
+/*
  * Cleanup script for the Cost Manager project.
  * Keeps a single dummy user and removes everything else.
  *
@@ -18,10 +18,10 @@ const path = require('path');
 const mongoose = require('mongoose');
 
 // Models (use app models to honor explicit collection names)
-const User = require('../src/models/user.model');
-const Cost = require('../src/models/cost.model');
-const Log = require('../src/models/log.model');
-const Report = require('../src/models/report.model');
+const User = require('../src/models/User');
+const Cost = require('../src/models/Cost');
+const Log = require('../src/models/Log');
+const Report = require('../src/models/Report');
 
 /* ---------- args ---------- */
 

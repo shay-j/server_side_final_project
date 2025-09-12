@@ -1,6 +1,6 @@
 'use strict';
 
-/**
+/*
  * API Router (single entry point).
  *
  * Responsibilities:
@@ -27,46 +27,62 @@ const express = require('express');
 const asyncMw = require('../middleware/async');
 
 const {
-  validateReportQuery,
-  validateUserIdParam,
-  validateAddUser,
-  validateAddCost,
+    validateReportQuery,
+    validateUserIdParam,
+    validateAddUser,
+    validateAddCost,
 } = require('../middleware/validate');
 
-const addCtrl = require('../controllers/add.controller');
-const reportCtrl = require('../controllers/report.controller');
-const usersCtrl = require('../controllers/users.controller');
-const logsCtrl = require('../controllers/log.controller');
-const aboutCtrl = require('../controllers/about.controller');
+const addCtrl = require('../controllers/add_controller');
+const reportCtrl = require('../controllers/report_controller');
+const usersCtrl = require('../controllers/users_controller');
+const logsCtrl = require('../controllers/log_controller');
+const aboutCtrl = require('../controllers/./about_controller');
 
 const router = express.Router();
 
-/** Tag the current endpoint so requestLogger can persist it. */
+/* Tag the current endpoint so requestLogger can persist it */
 function endpoint(name) {
-  return (req, res, next) => {
-    res.locals.endpoint = name;
-    next();
-  };
+    return (req, res, next) => {
+        res.locals.endpoint = name;  // Attach endpoint name to response locals
+        next();
+    };
 }
 
-/**
- * Inline validator chooser for POST /api/add.
- * No separate module export to avoid duplication.
- * If a body looks like a User -> validateAddUser; otherwise validateAddCost.
+/*
+ * Inline validator chooser for POST /api/add
+ * - No separate export to avoid duplication.
+ * - If body looks like a User -> validateAddUser
+ * - Otherwise -> validateAddCost
  */
 function pickAddValidator(req, res, next) {
-  const b = req.body || {};
-  const looksLikeUser =
-      b && typeof b === 'object' && 'id' in b && ('first_name' in b || 'last_name' in b);
-  return looksLikeUser ? validateAddUser(req, res, next) : validateAddCost(req, res, next);
+    const b = req.body || {};
+    const looksLikeUser =
+        b && typeof b === 'object' && 'id' in b && ('first_name' in b || 'last_name' in b);
+
+    // Delegate validation depending on the body shape
+    return looksLikeUser ? validateAddUser(req, res, next) : validateAddCost(req, res, next);
 }
 
-/* Routes */
+/* ===== Routes ===== */
+
+// Create a user or a cost
 router.post('/add', endpoint('add'), pickAddValidator, asyncMw(addCtrl.add));
+
+// Get monthly report (?id=&year=&month=)
 router.get('/report', endpoint('reports.getMonthly'), validateReportQuery, asyncMw(reportCtrl.getMonthly));
+
+// List all users
 router.get('/users', endpoint('users.list'), asyncMw(usersCtrl.list));
+
+// Get user by ID
 router.get('/users/:id', endpoint('users.getById'), validateUserIdParam, asyncMw(usersCtrl.getById));
+
+// List logs
 router.get('/logs', endpoint('logs.list'), asyncMw(logsCtrl.list));
+
+// About info
 router.get('/about', endpoint('about'), asyncMw(aboutCtrl.aboutController));
 
+// Export router
 module.exports = router;

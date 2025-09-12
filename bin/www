@@ -6,65 +6,69 @@ const app = require('../src/app');
 const port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
-/**
+/*
  * Bootstraps the application: starts app dependencies and HTTP server.
  */
 (async () => {
-  try {
-    await app.start();
-    const server = http.createServer(app);
-    server.listen(port);
-    server.on('listening', onListening);
-    server.on('error', onError);
-  } catch (err) {
-    console.error('[startup] failed:', err);
-    process.exit(1);
-  }
+    try {
+        await app.start();                     // Initialize DB and other dependencies
+        const server = http.createServer(app); // Create HTTP server with Express app
+        server.listen(port);                   // Start listening
+        server.on('listening', onListening);   // Attach listening handler
+        server.on('error', onError);           // Attach error handler
+    } catch (err) {
+        console.error('[startup] failed:', err);
+        process.exit(1);
+    }
 })();
 
-/**
+/*
  * Normalizes a port value into a number, named pipe string, or false.
  *
- * @param {string|number} val - The input port value (e.g., "3000" or named pipe).
- * @returns {number|string|false} A valid port, named pipe string, or false if invalid.
+ * Parameters:
+ *   val - The input port value (e.g., "3000" or named pipe).
+ *
+ * Returns:
+ *   number | string | false - A valid port, named pipe string, or false if invalid.
  */
 function normalizePort(val) {
-  const p = parseInt(val, 10);
-  if (Number.isNaN(p)) return val;
-  if (p >= 0) return p;
-  return false;
+    const p = parseInt(val, 10);
+    if (Number.isNaN(p)) return val; // Named pipe (string)
+    if (p >= 0) return p;            // Valid port number
+    return false;                    // Invalid
 }
 
-/**
+/*
  * 'listening' event handler for the HTTP server.
  *
- * @this import('http').Server
- * @returns {void}
+ * This function expects to be bound as a listener on the server instance.
  */
 function onListening() {
-  const addr = this.address();
-  const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
-  console.log(`[http] listening on ${bind}`);
+    const addr = this.address();
+    const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
+    console.log(`[http] listening on ${bind}`);
 }
 
-/**
+/*
  * 'error' event handler for the HTTP server.
  *
- * @param {NodeJS.ErrnoException} error - The error emitted by the server.
- * @throws {NodeJS.ErrnoException} Re-throws unhandled error codes.
- * @returns {void}
+ * Parameters:
+ *   error - The error emitted by the server.
+ *
+ * Throws:
+ *   Re-throws unhandled error codes.
  */
 function onError(error) {
-  if (error.syscall !== 'listen') throw error;
-  const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
-  switch (error.code) {
-    case 'EACCES':
-      console.error(`${bind} requires elevated privileges`);
-      process.exit(1);
-    case 'EADDRINUSE':
-      console.error(`${bind} is already in use`);
-      process.exit(1);
-    default:
-      throw error;
-  }
+    if (error.syscall !== 'listen') throw error;
+    const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
+    switch (error.code) {
+        case 'EACCES':
+            console.error(`${bind} requires elevated privileges`);
+            process.exit(1);
+        case 'EADDRINUSE':
+            console.error(`${bind} is already in use`);
+            process.exit(1);
+        default:
+            throw error;
+    }
 }

@@ -1,6 +1,6 @@
-const { getCachedOrCompute } = require('../services/reports.service');
+const { getCachedOrCompute } = require('../services/reports_service');
 const { notFound, ok } = require('../utils/responses');
-const { exists: userExists } = require('../services/users.service');
+const { exists: userExists } = require('../services/users_service');
 
 /**
  * Controller for handling `GET /api/report` requests.

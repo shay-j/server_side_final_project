@@ -2,7 +2,7 @@
 GET http://localhost:3000/health
 
 ### About (team info)
-GET http://localhost:3000/api/aboutController
+GET http://localhost:3000/api/about_controller
 
 ### Add user
 POST http://localhost:3000/api/add

@@ -67,7 +67,6 @@ requests.http         # WebStorm HTTP client requests
 The project uses `.env` (development) and `.env.test` (tests).  
 Main variables:
 * PORT=3000  
-* MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>/<db>?retryWrites=true&w=majority
 * MONGODB_URI=mongodb+srv://<DB_USERNAME>:<DB_PASSWORD>@<CLUSTER_HOST>/<DB_NAME>?retryWrites=true&w=majority
 * NODE_ENV=development
 

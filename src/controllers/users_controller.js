@@ -14,7 +14,7 @@ const { ok, notFound, created } = require('../utils/responses');
  * Calls users.create() to create the user.
  */
 const create = async (req, res) => {
-    // Create user document from request body
+    // Create a user document from the request body
     const doc = await users.create(req.body);
 
     // Return 201 Created response with new user
@@ -29,7 +29,7 @@ const list = async (_req, res) => {
     // Retrieve all users from the service
     const docs = await users.list();
 
-    // Return 200 OK response with list of users
+    // Return 200 OK response with a list of users
     return ok(res, docs);
 };
 
@@ -44,7 +44,7 @@ const getById = async (req, res) => {
     // If no user found, return 404 Not Found
     if (!doc) return notFound(res, 'user not found');
 
-    // Otherwise return 200 OK with user document
+    // Otherwise return 200 OK with a user document
     return ok(res, doc);
 };
 
